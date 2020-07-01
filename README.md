@@ -1,7 +1,3 @@
-<h2>Me</h2>
-<a href="https://uk.linkedin.com/in/adam-catley-7a24678b">LinkedIn</a><br>
-<a href="https://twitter.com/adamcatley">Twitter</a><br>
-
 <h2>My Projects</h2>
 
 <h3>Electronics:</h3>
