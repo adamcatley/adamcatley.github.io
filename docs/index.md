@@ -1,5 +1,5 @@
 ---
-layout: home
+layout: default
 title: Overview
 nav_order: 0
 ---
