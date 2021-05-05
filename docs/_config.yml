@@ -1,10 +1,10 @@
 title: Adam Catley
-description: My Pojects
+description: My Projects
 remote_theme: adamcatley/jekyll-theme-rtd
 
 # Theme settings:
 site_author: Adam Catley
-repo_url: "https://github.com/adamcatley/adamcatley.github.io"
+#repo_url: "https://github.com/adamcatley/adamcatley.github.io"
 edit_on_github: false
 github_docs_folder: false
 sticky_navigation: true
