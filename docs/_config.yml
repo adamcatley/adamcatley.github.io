@@ -1,7 +1,6 @@
 title: Adam Catley
 description: My Pojects
-remote_theme: carlosperate/jekyll-theme-rtd
-baseurl: "adamcatley.github.io"
+remote_theme: adamcatley/jekyll-theme-rtd
 
 # Theme settings:
 site_author: Adam Catley
