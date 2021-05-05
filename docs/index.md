@@ -1,10 +1,8 @@
 ---
-layout: default
-title: Overview
 nav_order: 0
 ---
 
-## My Projects
+## Projects Overview
 
 ### Electronics:
 
