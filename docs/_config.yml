@@ -1,0 +1,15 @@
+title: Adam Catley
+description: My Pojects
+remote_theme: carlosperate/jekyll-theme-rtd
+baseurl: "adamcatley.github.io"
+
+# Theme settings:
+site_author: Adam Catley
+repo_url: "https://github.com/adamcatley/adamcatley.github.io"
+edit_on_github: false
+github_docs_folder: false
+sticky_navigation: true
+prev_next_buttons_location: bottom
+search_enabled: false
+hljs_style: github-gist
+google_analytics: UA-26205307-2
