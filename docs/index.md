@@ -1,7 +1,7 @@
 ---
-layout: default
+layout: home
 title: Overview
-nav_order: 1
+nav_order: 0
 ---
 
 ## My Projects
