@@ -22,7 +22,7 @@ This page serves as a central resource for technical details, security research,
 - Samples the accelerometer every **10 seconds** when waiting for movement
 - Transmits BLE advertisement every **2 seconds** when away from its owner's device
 - BLE connection interval of **1 second** when near its owner's device
-- Needs at least **1.9V** battery voltage to startup
+- nRF needs at least **~1.9V** battery voltage to boot up
 - 32Mbit flash storage is **unencrypted**
 - nRF programming interface (**SWD**) easily accessible via test pads
 
@@ -31,7 +31,7 @@ This page serves as a central resource for technical details, security research,
 I started this investigation to learn about Apple's approach to electronics design and security in their latest products, especially at such a low price point ($29). I was particularly interested due to the similarities to my [Masters thesis](https://drive.google.com/file/d/0By4g-wZWsMlnaGg5S2JNRXRNWkk/view?usp=sharing) project in which I designed a small BLE device where battery life was also important.
 
 The aspects that I wanted to investigate are:
-- Hardware design to fit so much in a small enclosure (BLE, UWB, NFC, speaker, antennas) - [results](#hardware)
+- Hardware design to fit so much in a small enclosure (BLE, UWB, NFC, accelerometer, speaker, antennas) - [results](#hardware)
 - Use of custom silicon vs "off the shelf" components - [results](#pcb-overview)
 - Low energy design of hardware and software to maximise battery life - [resulsts](#battery-life)
 - Implementation of the [claimed privacy](#privacy-claims) features to avoid unwanted tracking - [results](#privacy)
@@ -102,7 +102,66 @@ TODO
 
 ### NFC
 
-TODO
+The AirTag uses the [NFC-A peripheral](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52832.ps.v1.1%2Fnfc.html) of the nRF52832 to implement an NXP MIFARE Plus (Type 4) tag in read only mode.  The NFC antenna is located behind the white cover, as shown [above](#antennas).
+
+NFC is used to allow anyone who finds an AirTag to potentially identify the owner, even if they have an Android device. Apple describe the process [here](https://support.apple.com/en-gb/HT212227#:~:text=If%20you%20find%20an%20AirTag%20or%20a%20lost%20item%20with%20an%20AirTag%20attached).
+
+The tag can only be read when the AirTag is powered by a battery. It simply contains a URL to uniquely identify the AirTag, depending on its current state.
+
+#### Unregistered
+When the AirTag is brand new, has been [reset](), or has been [removed](https://support.apple.com/en-in/guide/iphone/iph869abb075/ios) from the FindMy network, the URL stored on the tag is fixed and the values do not change. It follows the following format:
+
+```
+https://found.apple.com/airtag?pid=5500&b=00&pt=004c&fv=00100e10&dg=00&z=00&bt=A0B1C2D3E4F5&sr=ABCDEF123456&bp=0015
+```
+
+Parameter | Value | Description
+-|-|-
+pid|5500|Product ID for AirTag?
+b|00|Battery related?
+pt|004c|UWB Precision tracking/Finding version?
+fv|00100e10|Firmware version?
+dg|00|Diagnostic code?
+z|00|Unknown
+bt|XXXXXXXXXXXX|Default Bluetooth address (hexadecimal)
+sr|XXXXXXXXXXXX|Serial number of tag (alphanumeric)
+bp|0015|Bluetooth protcol version?
+
+While this data uniquely identifies the AirTag, it uses identifiers you would have access to if you were near enough to read NFC (<10cm) before the device is registered:
+- The device's Bluetooth address `bt` is also used for broadcasts in this state (so could be captured by someone nearby during setup). 
+- The serial number `sr` is not a secret. It is printed on the device under the battery (and on a sticker on the device packaging). It is also revealed by visiting the URL itself. Apple explain this [here](https://support.apple.com/en-gb/HT211658).
+
+Apple's servers accept any combination of values and parameter names. The only one used is `sr` and it can be empty. See [here](https://found.apple.com/airtag?sr=).
+```
+https://found.apple.com/airtag?sr=
+```
+
+I don't yet have another AirTag to compare the values across different devices. For a single unit at least, the values are persistent across power cycles, long runtime, resets and modes.
+
+#### Registered
+
+When the AirTag has been registered to the FindMy network with an iOS device, the tag URL changes slightly to the following format:
+
+```
+https://found.apple.com/airtag?pid=5500&b=00&pt=004c&fv=00100e10&dg=00&z=00&pi=793f8d9fccaa91c3c177f32acf47160656873168d72f070cd925ce97
+```
+Parameter | Value | Description
+-|-|-
+pid|5500|Product ID for AirTag?
+b|00|Battery related?
+pt|004c|UWB Precision tracking/Finding version?
+fv|00100e10|Firmware version?
+dg|00|Diagnostic code?
+z|00|Unknown
+pi|Varies |Public identity
+
+In summary, the parameters `bt`, `sr` and `bp` have been removed and replaced with a single **anonymous** identifier, `pi` (not to be confused with `pid`).
+
+`pi` is the only parameter that changes. It is updated at least every 15 minutes when the Bluetooth address and/or the advertising data changes. It seems to be a SHA-224 hash (as SHA3 is not listed in the nRF crypto library [documentation](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fsdk_nrf5_v17.0.2%2Fgroup__nrf__crypto__types.html&anchor=ga12a3acddd104d0183a93500119d8d0c5)). It is likely a hash of the current public key for the FindMy service.
+
+Again, most parameters are optional. The only requirement is that `pi` is valid. 
+
+Apple servers can somehow connect this to a specific device as the page shows the corresponding serial number, even before the AirTag has been registered, as well as the owner's lost message and phone number if available. Apple claims to not store any information about the AirTags and only the owner's phone and the AirTag can generate their rotating public keys.
 
 ## Battery Life
 
