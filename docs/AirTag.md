@@ -4,21 +4,25 @@ nav_order: 1
 
 # Apple AirTag
 
-This page serves as a central resource for technical details, security research, reverse engineering, and anything else about the Apple AirTag.
+This page serves as a central resource for technical details, security research, reverse engineering, and anything else about the Apple AirTag. It is a combination of my own work and a collection of publicly available information.
+
+[Tweet me](https://twitter.com/adamcatley) with corrections/improvements/suggestions.
 
 ## Key Facts
 
-- Uses off the shelf components, apart from Apple's U1 chip for UWB
-- The popular nRF52832 is used for BLE and NFC
-- Sleep curent consumption of 2.3µA gives max 10 years of battery life
-- Updates BLE address and advertisement data once a day at 02:00 UTC
-- Updates last byte of advertisement data every 15 minutes
-- Goes into lost mode exactly 3 days after being away from owner
-- Makes noise once every 6 hours while in lost mode and movement is detected
-- Samples the accelerometer every 10 seconds when waiting for movement
-- Transmits BLE advertisement every 2 seconds when away from owner's device
-- Connection inverval of 1 second when near owner's device
-- Needs at least 1.9V battery voltage
+- Uses **off the shelf** components, apart from Apple's U1 chip for UWB
+- The popular **nRF52832** is used for BLE and NFC
+- Sleep curent consumption of **2.3µA** gives over 10 years of potential battery life
+- Updates BLE address and advertisement data **once a day** at 02:00 UTC
+- Updates last byte of advertisement data every **15 minutes**
+- Goes into lost mode exactly **3 days** after being away from owner
+- Makes noise once every **6 hours** while in lost mode and movement is detected
+- Samples the accelerometer every **10 seconds** when waiting for movement
+- Transmits BLE advertisement every **2 seconds** when away from owner's device
+- Connection inverval of **1 second** when near owner's device
+- Needs at least **1.9V** battery voltage to startup
+- 32Mbit flash storage is **unencrypted**
+- Programming interface easily accessible via test pads
 
 ## Background Research
 
@@ -31,23 +35,34 @@ Support for the AirTag was introduced in iOS 14.5. Apple lists which iPhone, iPo
 Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting. This could be investigated further to add some kind of Android support, although an Apple ID is needed to benefit from the FindMy network.
 
 
-## Hardware Teardown
+## Hardware 
+
+### Teardown
 
 [Twitter Thread](https://twitter.com/adamcatley/status/1388196843184697346)
 
 ### PCB Overview
+
+#### Revisions
 
 ### Antennas
 
 ### Speaker
 
 ### Power
+<!--- +/- tabs, capacitor --->
 
 ## Theory of Operation
 
 ### Architecture
 
 ### States
+
+### Bluetooth
+
+### UWB
+
+### NFC
 
 ## Battery Life
 
