@@ -6,9 +6,9 @@ nav_order: 1
 
 This page serves as a central resource for technical details, security research, reverse engineering, and anything else about the Apple AirTag. It is a combination of my work and a collection of publicly available information. It will be updated as more is discovered.
 
-[Tweet me](https://twitter.com/adamcatley) with corrections/improvements/suggestions.
+[Tweet me](https://twitter.com/adamcatley) or [view on GitHub](https://github.com/adamcatley/adamcatley.github.io/blob/master/docs/AirTag.md) to propose changes or corrections.
 
-![](img/airtag/banner.png)
+![](img/airtag/banner.jpg)
 
 ## Key Facts and Findings
 
@@ -51,7 +51,7 @@ Support for the AirTag was introduced in iOS 14.5. Apple lists which iPhone, iPo
 
 ## Hardware 
 
-TODO
+![](img/airtag/pieces.jpg)
 
 ### Teardown
 
@@ -84,7 +84,7 @@ There are three antennas inside the AirTag:
 
 They are all etched onto a single piece of plastic using Laser Direct Structuring (LDS) and then soldered to the PCB around the edge. The NFC antenna also has a short trace on the other side of the plastic (connected with a via at each end) to return the inside end of the coil to the PCB.
 
-[![](img/airtag/antennas.jpg)](img/airtag/antennas.jpg)
+![](img/airtag/antennas.jpg)
 
 ### Speaker
 
@@ -107,11 +107,46 @@ TODO
 
 TODO
 
+## Wirelss Communication
+
 ### Bluetooth
 
-TODO
+#### Advertising data
+
+This section describes the Bluetooth activity when the AirTag is registered to the FindMy network. 
+
+- Address type: Random Static (changes daily)
+- Advertising PDU type: Connectable undirected (ADV_IND)
+- Advertising period: 2000ms
+
+Byte #|Value|Description
+:-:|-|-
+0|0x1E|Advertising data length: 31 (the maximum allowed)
+1|0xFF|Advertising data type: Manufacturer Specific Data
+2-3|0x004C|Apple's [company identifier](https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
+4|0x12|Apple payload type to indicate a FindMy network broadcast?
+5|0x19|Apple payload length (31 - 6 = 25 = 0x19)
+6|0x10|FindMy device type to indicate an AirTag? (0x00 seen from other Apple devices)
+7-29|Varies|Assumed to be P-224 public key used by FindMy network. Changes daily
+30|0-3|Status flags and/or ECC public key [odd/even bit](https://cryptobook.nakov.com/asymmetric-key-ciphers/elliptic-curve-cryptography-ecc#public-key-compression-in-the-elliptic-key-cryptosystems)?
+31|Varies|Crypto counter value? Changes every 15 minutes to a random value
+
+According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data should contain a NIST P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. Are they not using all the bits?
 
 Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting. This could be investigated further to add some kind of Android support, although an Apple ID is needed to benefit from the FindMy network.
+
+#### Unregistered behaviour
+
+When the AirTag is not registered to the FindMy network, it has similar behaviour but advertises using its default device address at 33ms intervals, and with a different Apple payload. 
+
+Byte #|Value|Description
+:-:|-|-
+0|0x1E|Advertising data length: 31 (the maximum allowed)
+1|0xFF|Advertising data type: Manufacturer Specific Data
+2-3|0x004C|Apple's [company identifier](https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
+4|0x07|Apple payload type to indicate a FindMy device?
+5|0x19|Apple payload length (31 - 6 = 25 = 0x19)
+6-31|Varies|Not investigated yet
 
 ### UWB
 
@@ -121,7 +156,7 @@ TODO
 
 The AirTag uses the [NFC-A peripheral](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52832.ps.v1.1%2Fnfc.html) of the nRF52832 to implement an NXP MIFARE Plus (Type 4) tag in read only mode.  The NFC antenna is located behind the white cover, as shown [above](#antennas).
 
-NFC is used to allow anyone who finds an AirTag to potentially identify the owner, even if they have an Android device. Apple describe the process [here](https://support.apple.com/en-gb/HT212227#:~:text=If%20you%20find%20an%20AirTag%20or%20a%20lost%20item%20with%20an%20AirTag%20attached).
+NFC is used to allow anyone who finds an AirTag to potentially identify the owner, even if they have an Android device. Apple describes the process [here](https://support.apple.com/en-gb/HT212227#:~:text=If%20you%20find%20an%20AirTag%20or%20a%20lost%20item%20with%20an%20AirTag%20attached).
 
 The tag can only be read when the AirTag is powered by a battery. It simply contains a URL to uniquely identify the AirTag, depending on its current state.
 
@@ -171,17 +206,17 @@ pt|004c|UWB Precision tracking/Finding version?
 fv|00100e10|Firmware version?
 dg|00|Diagnostic code?
 z|00|Unknown
-pi|Varies |Public identity
+pi|Varies |Public identity (224 bits long)
 
 In summary, the parameters `bt`, `sr` and `bp` have been removed and replaced with a single **anonymous** identifier, `pi` (not to be confused with `pid`).
 
-`pi` is the only parameter that changes. It is updated at least every 15 minutes when the Bluetooth address and/or the advertising data changes. It seems to be a SHA-224 hash (as SHA3 is not listed in the nRF crypto library [documentation](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fsdk_nrf5_v17.0.2%2Fgroup__nrf__crypto__types.html&anchor=ga12a3acddd104d0183a93500119d8d0c5)). It is likely a hash of the current public key for the FindMy service.
+`pi` is the only parameter that changes. It is updated at least every 15 minutes when the Bluetooth address and/or the advertising data changes. It is likely the current P-224 public key, or a SHA-224 hash of the key. It does not match the BLE advertising data which should contain the public key.
 
 Again, most parameters are optional. The only requirement is that `pi` is valid. 
 
-Apple servers can somehow connect this to a specific device as the page shows the corresponding serial number, even before the AirTag has been registered, as well as the owner's lost message and phone number if available. Apple claims to not store any information about the AirTags and only the owner's phone and the AirTag can generate their rotating public keys.
+Apple servers can somehow connect this to a specific device as the page shows the corresponding serial number (maybe even before the AirTag has been registered) as well as the owner's lost message and phone number if available. Apple claims to not store any information about the AirTags and only the owner's phone and the AirTag can generate their rotating public keys.
 
-The firmware function that generates this URL has been identified by [@stacksmashing](). Further reverse engineering could reveal the meaning of the unknown URL parameters set by that function. See his work [here](https://twitter.com/ghidraninja/status/1390639514134237186):
+The firmware function that generates this URL has been [identified](https://twitter.com/ghidraninja/status/1390639514134237186) by [@ghidraninja](https://twitter.com/ghidraninja). Further reverse engineering could reveal the meaning of the unknown URL parameters set by that function.
 
 [![](https://pbs.twimg.com/media/E0yLQ7mWEAA62JT?format=png)](https://twitter.com/ghidraninja/status/1390639514134237186)
 
@@ -203,8 +238,33 @@ TODO
 
 ## Security
 
+### Assets
+
 TODO
+
+### nRF52832
+
+The nRF52832 has Access Port Protection (APPROTECT). This disables access to the Debug Port through SWD and prevents reading out the internal flash. Colin O'Flynn has [confirmed](https://twitter.com/colinoflynn/status/1390499614860644355) that AirTags do enable this security feature.
+
+However, it is known that this protection is vulnerable to side channel attacks and can be bypassed on all nRF52 devices through voltage glitching as described [here](https://limitedresults.com/2020/06/nrf52-debug-resurrection-approtect-bypass/). 
+
+We can assume Apple are aware of this exploit as it was disclosed in Q2 2020. This would have been towards the end of the development cycle for the AirTag so it is unclear if/how Apple addresed this risk. 
+
+The privacy mechanism used by FindMy devices uses well documented cryptography and so is not dependant on confidentiality of the firmware. However, it would be possible to disable other privacy features that Apple advertise, or run completely custom firmware.
+
+### Apple U1 
+
+Very little is known about this custom chip designed by Apple.
+
+It likely contains a processor as the flash chip [contains](https://twitter.com/ghidraninja/status/1390609884316635138) 64-bit ARM instructions that the nRF52832 does not support (discovered by [@ghidraninja](https://twitter.com/ghidraninja)).
+
+### Flash
+
+The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208). It is yet to be confirmed where/if the public/private key pair is stored.
 
 ## Mods
 
 TODO
+
+Ideas:
+-
