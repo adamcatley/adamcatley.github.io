@@ -116,7 +116,7 @@ https://found.apple.com/airtag?pid=5500&b=00&pt=004c&fv=00100e10&dg=00&z=00&bt=A
 ```
 
 Parameter | Value | Description
--|-|-
+:-:|-|-
 pid|5500|Product ID for AirTag?
 b|00|Battery related?
 pt|004c|UWB Precision tracking/Finding version?
@@ -136,7 +136,7 @@ Apple's servers accept any combination of values and parameter names. The only o
 https://found.apple.com/airtag?sr=
 ```
 
-I don't yet have another AirTag to compare the values across different devices. For a single unit at least, the values are persistent across power cycles, long runtime, resets and modes.
+I don't yet have another AirTag to compare the values across different devices. For a single unit the values are persistent across power cycles, long runtime, resets and modes.
 
 #### Registered
 
@@ -145,8 +145,9 @@ When the AirTag has been registered to the FindMy network with an iOS device, th
 ```
 https://found.apple.com/airtag?pid=5500&b=00&pt=004c&fv=00100e10&dg=00&z=00&pi=793f8d9fccaa91c3c177f32acf47160656873168d72f070cd925ce97
 ```
+
 Parameter | Value | Description
--|-|-
+:-:|-|-
 pid|5500|Product ID for AirTag?
 b|00|Battery related?
 pt|004c|UWB Precision tracking/Finding version?
@@ -162,6 +163,10 @@ In summary, the parameters `bt`, `sr` and `bp` have been removed and replaced wi
 Again, most parameters are optional. The only requirement is that `pi` is valid. 
 
 Apple servers can somehow connect this to a specific device as the page shows the corresponding serial number, even before the AirTag has been registered, as well as the owner's lost message and phone number if available. Apple claims to not store any information about the AirTags and only the owner's phone and the AirTag can generate their rotating public keys.
+
+The firmware function that generates this URL has been identified by [@stacksmashing](). Further reverse engineering could reveal the meaning of the unknown URL parameters passed to that function. See his work [here](https://twitter.com/ghidraninja/status/1390639514134237186):
+
+[![](https://pbs.twimg.com/media/E0yLQ7mWEAA62JT?format=png)](https://twitter.com/ghidraninja/status/1390639514134237186)
 
 ## Battery Life
 
