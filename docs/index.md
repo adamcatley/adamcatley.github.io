@@ -2,9 +2,7 @@
 nav_order: 0
 ---
 
-# Overview
-
-## About me
+# About me
 
 ## Projects
 
