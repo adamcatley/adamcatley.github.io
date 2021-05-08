@@ -20,6 +20,7 @@ This page serves as a central resource for technical details, security research,
 - Goes into a lost mode exactly **3 days** after being away from its owner's device
 - Makes noise once every **6 hours** while in lost mode and movement is detected
 - Samples the accelerometer every **10 seconds** when waiting for movement
+- Samples the accelerometer every **0.5 seconds** once motion is detected, for **20 seconds**
 - Transmits BLE advertisement every **2 seconds** when away from its owner's device
 - BLE connection interval of **1 second** when near its owner's device
 - nRF needs at least **~1.9V** battery voltage to boot up
@@ -43,7 +44,13 @@ This section contains the research I did about these topics before my AirTag arr
 
 ### Privacy Claims
 
-TODO
+From [this video](https://www.youtube.com/watch?v=DEbm2iG1TNU&t=120s):
+>Bluetooth identifiers rotate several times a day.
+
+Apple document the privacy features of the FindMy network in detail [here](https://support.apple.com/en-gb/guide/security/sec60fd770ba/web) and [here](https://support.apple.com/en-gb/guide/security/sece994d0126/web).
+
+[![](https://help.apple.com/assets/5C2D31DA0946224012A6B385/5C2D345D0946227F55A6AEB2/en_GB/bae1694494dee2a8a8872468fbb39a4f.png)](https://support.apple.com/en-gb/guide/security/sece994d0126/web)
+
 
 ### Supported devices
 
@@ -62,17 +69,44 @@ There are several documented teardowns, listed in chronological order:
 - [May 3] [@tb69rr](https://twitter.com/tb69rr/status/1389183123234119680)
 - [May 3] [iFixit](https://www.ifixit.com/News/50145/airtag-teardown-part-one-yeah-this-tracks) article (inlcuding x-ray [video](https://valkyrie.cdn.ifixit.com/media/2021/05/01153224/drill-xray-1.mp4) and high  quality [front](https://valkyrie.cdn.ifixit.com/media/2021/05/03133827/AirTags_33.jpg), [back](https://valkyrie.cdn.ifixit.com/media/2021/05/03133839/AirTags_48.jpg) images)
 - [May 4] [JerryRigEverything](https://www.youtube.com/watch?v=5MaPqUYAetg) video
-- [May 7] [Colin O'Flynn](https://twitter.com/colinoflynn/status/1390432081126297606)
+- [May 7] Colin O'Flynn [Twitter thread](https://twitter.com/colinoflynn/status/1390432081126297606) and related [blog post](https://colinoflynn.com/2021/05/apple-airtag-teardown-test-point-mapping/)
 
 Removing the PCB is likely to cause damage due to the thin PCB and it being soldered to the plastic tray.
 
-### PCB Overview
-
-TODO
-
 #### Revisions
 
-TODO
+The various teardowns reveal variations in the PCB markings in the top copper layer. This will be useful if it is determined that early production runs didnt enable all security features to lock down the units.
+
+The bottom right numbers look like a manufacturing data code (eg. "2920 17" could be the 29th week of 2020, batch 17). From the available samples:
+- US devices are in the range `2920, 3020, 3120`
+- Europe is `5220`, a few months later
+- Asia is `1021`, a few months later and only a few weeks befor launch
+
+There is also a letter to the left of the 3 big pads on the left. This could relate to the U1 chip underneath
+- This is either `A` (Europe) or `C` (rest of world). `A` also comes with a 3 digit number, C does not.
+
+A constant value `820-01736-A` is on the silkscreen layer and looks like Apple's internal part number and revision (`A`) for the PCB.
+
+More samples are needed to understand better.
+
+### PCB Overview
+
+[![](https://valkyrie.cdn.ifixit.com/media/2021/05/03133816/AirTags_33-3-up.jpg)](https://www.ifixit.com/News/50145/airtag-teardown-part-one-yeah-this-tracks)
+
+*Annotated diagram coming soon*
+
+- nRF52832
+- GD25LE32D 32Mbit NOR flash
+- MAX98357AEWL audio amp 
+- TPS62746 DC buck
+- TLV9001IDPWR opamp
+- BMA280 accelerometer
+
+#### Test points
+
+[![](https://raw.githubusercontent.com/colinoflynn/airtag-re/master/images/frontside-tpnames.jpg)](https://github.com/colinoflynn/airtag-re/blob/master/images/frontside-tpnames.jpg)
+
+Colin O'Flynn has helpfully [documented](https://github.com/colinoflynn/airtag-re/blob/master/README.md) the test points on the top side of the PCB.
 
 ### Antennas
 
@@ -88,12 +122,25 @@ They are all etched onto a single piece of plastic using Laser Direct Structurin
 
 ### Speaker
 
-TODO
+The voice coil is glued to the outer plastic shell which acts as a diaphragm. Due to the fixed magnet it moves back and forth when the coil is energised, producing sound to act as the speaker.
+
+The AirTag operates the same whether the voice coil is connected or not.
+
+After 3 days of being away from its ownder's device, the speaker will make a loud beep if motion is detected, for a maximum of 20 seconds of motion. It will then stay silent for the next 6 hours until waiting for motion again.
+
+Playing sound uses >3000x more power than being asleep, arond 8mA, even without a voice coil attached. This is perhaps because the nRF has to rapidly update the DAC with audio samples. Here current (yellow) is plotted in sync with the corresponding sound wave (blue) while playing the lost AirTag noise:
+
+![](img/airtag/sound%20energy.jpg)
+
+### Flash storage
+
+The SPI flash can be accessed by following [this guide](https://colinoflynn.com/2021/05/apple-airtag-teardown-test-point-mapping/).
 
 ### Power
-<!--- +/- tabs, capacitor --->
 
-TODO
+There are 2 positive battery terminals. Both need 3V to power the AirTag.
+
+There are 5 100uF capacitors around the edge of the top side of the PCB. They keep the device powered up for several seconds with the battery removed. This likey helps with the [reset procedure](https://support.apple.com/en-gb/HT212251#:~:text=repeat%20the%20process%20four%20more%20times,%20removing%20and%20replacing%20the%20battery) of removing the battery 5 times in short succession.
 
 ## Theory of Operation
 
@@ -109,7 +156,9 @@ TODO
 
 ## Wirelss Communication
 
-### Bluetooth
+### Bluetooth LE
+
+The nRF52832 supports BLE 5.2.
 
 #### Advertising data
 
@@ -118,6 +167,7 @@ This section describes the Bluetooth activity when the AirTag is registered to t
 - Address type: Random Static (changes daily)
 - Advertising PDU type: Connectable undirected (ADV_IND)
 - Advertising period: 2000ms
+- Advertising tramsmit time: 4ms (including wake up)
 
 Byte #|Value|Description
 :-:|-|-
@@ -150,7 +200,17 @@ Byte #|Value|Description
 
 ### UWB
 
-TODO
+Uses Apple's custom U1 chip.
+
+Looks different to the U1 seen in other Apple devices such as [iPhone 11](https://www.ifixit.com/News/33257/inside-the-tech-in-apples-ultra-wideband-u1-chip).
+
+From the FCC [test report](https://fccid.io/BCGA2187/Test-Report/12791034-E2V3-FCC15-519-Final-Report-5130980):
+- UWB Channel 5 (6.5GHz) and 9 (8GHz)
+- 500MHz Bandwidth
+- BPSK
+- 1 antenna
+
+Currently untested.
 
 ### NFC
 
@@ -161,7 +221,7 @@ NFC is used to allow anyone who finds an AirTag to potentially identify the owne
 The tag can only be read when the AirTag is powered by a battery. It simply contains a URL to uniquely identify the AirTag, depending on its current state.
 
 #### Unregistered
-When the AirTag is brand new, has been [reset](), or has been [removed](https://support.apple.com/en-in/guide/iphone/iph869abb075/ios) from the FindMy network, the URL stored on the tag is fixed and the values do not change. It follows the following format:
+When the AirTag is brand new, has been [reset](https://support.apple.com/en-gb/HT212251#:~:text=repeat%20the%20process%20four%20more%20times,%20removing%20and%20replacing%20the%20battery), or has been [removed](https://support.apple.com/en-in/guide/iphone/iph869abb075/ios) from the FindMy network, the URL stored on the tag is fixed and the values do not change. It follows the following format:
 
 ```
 https://found.apple.com/airtag?pid=5500&b=00&pt=004c&fv=00100e10&dg=00&z=00&bt=A0B1C2D3E4F5&sr=ABCDEF123456&bp=0015
@@ -232,9 +292,19 @@ This gives a **maximum battery life of at least 11 years** if the device never c
 
 Achieving a sleep current of 2.3µA is impressive given the nRF52832 alone uses 1.9µA (at 1.8V) while asleep with RTC running, according to its datasheet. This means the rest of the circuitry is designed to be very efficient, minimise leakage and actively shut down or remove power from unused components such as the U1 and flash.
 
-## Privacy
+### Energy traces
+
+The current consumption for many of the AirTag's wake up events have been captured and will be added here soon. You can see a preview of the BLE advertisement event at the top of the page.
 
 TODO
+
+## Privacy
+
+The Bluetooth address only changes once a day (at 2am UTC). Further, only the last of the 31 advertisement bytes changes during the day. This makes it easy to track anyone unknowingly carrying an AirTag for the rest of their daily routine (eg to their home).
+
+There also seems to be a way to predict part of the future Bluetooth address, but this needs more investigation.
+
+The AirTag seems perfectly happy to operate as normal wihout the voice coil connected. This seems to be poor protection for the part of Apple's privacy claims that involve making a sound to notify nearby people they may be being tracked.
 
 ## Security
 
@@ -260,11 +330,30 @@ It likely contains a processor as the flash chip [contains](https://twitter.com/
 
 ### Flash
 
-The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208). It is yet to be confirmed where/if the public/private key pair is stored.
+The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208) and contains several assets. It is yet to be confirmed where/if the public/private key pair is stored.
 
 ## Mods
 
-TODO
+### Smallest form factor
 
-Ideas:
--
+>Is is possible to make the AirTag even smaller to put it inside other devices? 
+
+The other device's battery could be used for power, and the device casing be used as a diaphragm for the speaker by attaching the voice coil.
+
+The stock dimensions are **31.9mm diameter and 8.0mm height**.
+
+The smallest dimensions possible while retaining funtionality is **26mm diameter and 3mm height**.
+
+![](https://pbs.twimg.com/media/E0PZLTCWEAMUZLA?format=jpg&name=4096x4096)
+
+### Change sounds
+
+> Can the sounds the AirTag makes during statup and when lost be changed?
+
+Need to investigate if raw audio files are used (and where they're stored), or generated live programmatically. 
+
+The startup sound ([example](https://www.youtube.com/watch?v=vniKeX-O2Xk)) is made of a few frequencies around 3kHz. Spectrum:
+
+![](img/airtag/spectrum.jpg)
+
+*This page is a work in progress...*
