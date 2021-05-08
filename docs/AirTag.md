@@ -55,7 +55,16 @@ TODO
 
 ### Teardown
 
-[Twitter thread](https://twitter.com/adamcatley/status/1388196843184697346)
+There are several documented teardowns, listed in chronological order:
+- [Apr 30] [@haruki_kawaiii](https://twitter.com/haruki_kawaiii/status/1388012416613507072)
+- [Apr 30] My own [Twitter thread](https://twitter.com/adamcatley/status/1388196843184697346)
+- [Apr 30] [DBrand](https://dbrand.com/shop/special-edition/teardown) skins ([front](https://dbrand.com/sites/default/files/dba/printed-skins-ppv/teardown/apple-airtag/sig_teardown-gloss_0.jpg), [back](https://dbrand.com/sites/default/files/dba/printed-skins-ppv/teardown/apple-airtag/sig_teardown-gloss_1.jpg) images)
+- [May 3] [@tb69rr](https://twitter.com/tb69rr/status/1389183123234119680)
+- [May 3] [iFixit](https://www.ifixit.com/News/50145/airtag-teardown-part-one-yeah-this-tracks) article (inlcuding x-ray [video](https://valkyrie.cdn.ifixit.com/media/2021/05/01153224/drill-xray-1.mp4) and high  quality [front](https://valkyrie.cdn.ifixit.com/media/2021/05/03133827/AirTags_33.jpg), [back](https://valkyrie.cdn.ifixit.com/media/2021/05/03133839/AirTags_48.jpg) images)
+- [May 4] [JerryRigEverything](https://www.youtube.com/watch?v=5MaPqUYAetg) video
+- [May 7] [Colin O'Flynn](https://twitter.com/colinoflynn/status/1390432081126297606)
+
+Removing the PCB is likely to cause damage due to the thin PCB and it being soldered to the plastic tray.
 
 ### PCB Overview
 
@@ -67,7 +76,15 @@ TODO
 
 ### Antennas
 
-TODO
+There are three antennas inside the AirTag:
+
+1. Bluetooth Low Energy (left) - 2.4GHz
+2. NFC (middle) - 13.56MHz
+3. Ultra Wideband (right) - 6.5-8GHz
+
+They are all etched onto a single piece of plastic using Laser Direct Structuring (LDS) and then soldered to the PCB around the edge. The NFC antenna also has a short trace on the other side of the plastic (connected with a via at each end) to return the inside end of the coil to the PCB.
+
+[![](img/airtag/antennas.jpg)](img/airtag/antennas.jpg)
 
 ### Speaker
 
@@ -164,7 +181,7 @@ Again, most parameters are optional. The only requirement is that `pi` is valid.
 
 Apple servers can somehow connect this to a specific device as the page shows the corresponding serial number, even before the AirTag has been registered, as well as the owner's lost message and phone number if available. Apple claims to not store any information about the AirTags and only the owner's phone and the AirTag can generate their rotating public keys.
 
-The firmware function that generates this URL has been identified by [@stacksmashing](). Further reverse engineering could reveal the meaning of the unknown URL parameters passed to that function. See his work [here](https://twitter.com/ghidraninja/status/1390639514134237186):
+The firmware function that generates this URL has been identified by [@stacksmashing](). Further reverse engineering could reveal the meaning of the unknown URL parameters set by that function. See his work [here](https://twitter.com/ghidraninja/status/1390639514134237186):
 
 [![](https://pbs.twimg.com/media/E0yLQ7mWEAA62JT?format=png)](https://twitter.com/ghidraninja/status/1390639514134237186)
 
