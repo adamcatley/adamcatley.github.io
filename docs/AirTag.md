@@ -4,7 +4,7 @@ nav_order: 1
 
 # Apple AirTag Reverse Engineering
 
-This page serves as a central resource for technical details of the AirTag: hacks, security research, mofifications, teardowns and more. It is a combination of my work and publicly available information. It will be updated as more is discovered.
+This page serves as a central resource for technical details of the AirTag: hacks, security research, modifications, teardowns and more. It is a combination of my work and publicly available information. It will be updated as more is discovered.
 
 [Tweet me](https://twitter.com/adamcatley) or [view on GitHub](https://github.com/adamcatley/adamcatley.github.io/blob/master/docs/AirTag.md) to propose changes or corrections.
 
