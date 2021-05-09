@@ -2,9 +2,9 @@
 nav_order: 1
 ---
 
-# Apple AirTag
+# Apple AirTag Reverse Engineering
 
-This page serves as a central resource for technical details, security research, reverse engineering, and anything else about the Apple AirTag. It is a combination of my work and a collection of publicly available information. It will be updated as more is discovered.
+This page serves as a central resource for technical details of the AirTag: hacks, security research, mofifications, teardowns and more. It is a combination of my work and publicly available information. It will be updated as more is discovered.
 
 [Tweet me](https://twitter.com/adamcatley) or [view on GitHub](https://github.com/adamcatley/adamcatley.github.io/blob/master/docs/AirTag.md) to propose changes or corrections.
 
@@ -34,7 +34,7 @@ I started this investigation to learn about Apple's approach to electronics desi
 The aspects that I wanted to investigate are:
 - Hardware design to fit so much in a small enclosure (BLE, UWB, NFC, accelerometer, speaker, antennas) - [results](#hardware)
 - Use of custom silicon vs "off the shelf" components - [results](#pcb-overview)
-- Low energy design of hardware and software to maximise battery life - [resulsts](#battery-life)
+- Low energy design of hardware and software to maximise battery life - [results](#battery-life)
 - Implementation of the [claimed privacy](#privacy-claims) features to avoid unwanted tracking - [results](#privacy)
 - Usage of recent BLE privacy and security features - [results](#bluetooth)
 - Hardware and firmware security of Apple products - [results](#security)
@@ -181,7 +181,7 @@ Byte #|Value|Description
 30|0-3|Status flags and/or ECC public key [odd/even bit](https://cryptobook.nakov.com/asymmetric-key-ciphers/elliptic-curve-cryptography-ecc#public-key-compression-in-the-elliptic-key-cryptosystems)?
 31|Varies|Crypto counter value? Changes every 15 minutes to a random value
 
-According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data should contain a NIST P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. Are they not using all the bits?
+According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data should contain a NIST P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. The other 5 bytes are cleverly used as the device's Bluetooth address. This is how Apple fits a public key in a single BLE packet. As demonstrated [here](https://github.com/seemoo-lab/openhaystack/blob/ffc5170ea4b4ceb1ad84e4f89324d6e666ffc7c3/Firmware/ESP32/main/openhaystack_main.c#L107).
 
 Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting. This could be investigated further to add some kind of Android support, although an Apple ID is needed to benefit from the FindMy network.
 
