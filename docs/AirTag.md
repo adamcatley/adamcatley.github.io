@@ -14,7 +14,7 @@ This page serves as a central resource for technical details of the AirTag: hack
 
 - Uses **off the shelf** components, apart from Apple's U1 chip for UWB
 - The popular **nRF52832** is used for BLE and NFC
-- Sleep current consumption of **2.3µA** gives over 10 years of potential battery life
+- Sleep current consumption of **2.3µA** gives over **10 years** of potential battery life
 - Updates BLE address and public key **once a day** at 02:00 UTC
 - Updates last byte of advertisement data every **15 minutes**
 - Goes into a lost mode exactly **3 days** after being away from its owner's device
@@ -42,7 +42,7 @@ The aspects that I wanted to investigate are:
 
 This section contains the research I did about these topics before my AirTag arrived on release day (30/04/2021).
 
-### Privacy Claims
+### Privacy claims
 
 From [this video](https://www.youtube.com/watch?v=DEbm2iG1TNU&t=120s):
 >Bluetooth identifiers rotate several times a day.
@@ -55,6 +55,10 @@ Apple document the privacy features of the FindMy network in detail [here](https
 ### Supported devices
 
 Support for the AirTag was introduced in iOS 14.5. Apple lists which iPhone, iPod Touch and iPad devices are supported [here](https://support.apple.com/en-gb/HT211348).
+
+### Existing trackers
+
+TODO
 
 ## Hardware 
 
@@ -116,9 +120,10 @@ There are three antennas inside the AirTag:
 2. NFC (middle) - 13.56MHz
 3. Ultra Wideband (right) - 6.5-8GHz
 
-They are all etched onto a single piece of plastic using Laser Direct Structuring (LDS) and then soldered to the PCB around the edge. The NFC antenna also has a short trace on the other side of the plastic (connected with a via at each end) to return the inside end of the coil to the PCB.
-
 ![](img/airtag/antennas.jpg)
+
+
+They are all etched onto a single piece of plastic using Laser Direct Structuring (LDS) and then soldered to the PCB around the edge. The NFC antenna also has a short trace on the other side of the plastic (connected with a via at each end) to return the inside end of the coil to the PCB.
 
 ### Speaker
 
@@ -138,7 +143,9 @@ The SPI flash can be accessed by following [this guide](https://colinoflynn.com/
 
 ### Power
 
-There are 2 positive battery terminals. Both need 3V to power the AirTag.
+There are 2 positive battery terminals. Both need 3V applied to boot the AirTag.
+
+However, only the left side battery terminal actually powers the electronics. The voltage on the right side terminal is sensed but consumes only ~50nA in most modes. *It could be used to power the U1 chip when UWB is activated for Precision Finding.*
 
 There are 5 100uF capacitors around the edge of the top side of the PCB. They keep the device powered up for several seconds with the battery removed. This likey helps with the [reset procedure](https://support.apple.com/en-gb/HT212251#:~:text=repeat%20the%20process%20four%20more%20times,%20removing%20and%20replacing%20the%20battery) of removing the battery 5 times in short succession.
 
@@ -177,11 +184,11 @@ Byte #|Value|Description
 4|0x12|Apple payload type to indicate a FindMy network broadcast?
 5|0x19|Apple payload length (31 - 6 = 25 = 0x19)
 6|0x10|FindMy device type to indicate an AirTag? (0x00 seen from other Apple devices)
-7-29|Varies|Assumed to be P-224 public key used by FindMy network. Changes daily
+7-29|Varies|EC P-224 public key used by FindMy network. Changes daily
 30|0-3|Status flags and/or ECC public key [odd/even bit](https://cryptobook.nakov.com/asymmetric-key-ciphers/elliptic-curve-cryptography-ecc#public-key-compression-in-the-elliptic-key-cryptosystems)?
 31|Varies|Crypto counter value? Changes every 15 minutes to a random value
 
-According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data should contain a NIST P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. The other 5 bytes are cleverly used as the device's Bluetooth address. This is how Apple fits a public key in a single BLE packet. As demonstrated [here](https://github.com/seemoo-lab/openhaystack/blob/ffc5170ea4b4ceb1ad84e4f89324d6e666ffc7c3/Firmware/ESP32/main/openhaystack_main.c#L107).
+According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data contains a NIST EC P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. The other 5 bytes are cleverly used as the device's Bluetooth address. This is how Apple fits a public key in a single BLE packet. As demonstrated [here](https://github.com/seemoo-lab/openhaystack/blob/ffc5170ea4b4ceb1ad84e4f89324d6e666ffc7c3/Firmware/ESP32/main/openhaystack_main.c#L107).
 
 Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting. This could be investigated further to add some kind of Android support, although an Apple ID is needed to benefit from the FindMy network.
 
@@ -208,7 +215,7 @@ From the FCC [test report](https://fccid.io/BCGA2187/Test-Report/12791034-E2V3-F
 - UWB Channel 5 (6.5GHz) and 9 (8GHz)
 - 500MHz Bandwidth
 - BPSK
-- 1 antenna
+- 1 antenna [(above)](#antennas)
 
 Currently untested.
 
