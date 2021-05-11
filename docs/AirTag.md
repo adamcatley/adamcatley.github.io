@@ -319,21 +319,21 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
 
     >*"When moved, any AirTag separated for a period of time from the person who registered it will make a sound to alert those nearby"* - [Source](https://support.apple.com/en-us/HT212227#:~:text=any%20AirTag%20separated%20for%20a%20period%20of%20time%20from%20the%20person%20who%20registered%20it%20will%20make%20a%20sound%20to%20alert%20those%20nearby)
 
-    Reality: Sound alerts don't start until three **days** after separation. Even then, they only happen once motion is detected, for a maximum of 20 seconds of detected motion. The AirTag is then silent for 6 hours at a time between waiting for motion to make sound for a maximum of 20 seconds. 
+    **Reality**: Sound alerts don't start until three days after separation. Even then, they only happen once motion is detected, for a maximum of 20 seconds of detected motion. The AirTag is then silent for 6 hours at a time between waiting for motion to make sound for a maximum of 20 seconds. 
 
-    Impact: An AirTag unknowingly placed in someone's possessions can be used to track them for at least 3 days, enough to identify their routine. After that, it is likely to make noise for a maximum of 40 seconds a day during a normal commuting schedule (2 motion triggers >=6 hours apart). Movement is likely to coincide with a noisy environment while travelling or muffled by objects touching the white casing.
+    **Impact**: An AirTag unknowingly placed in someone's possessions can be used to track them for at least 3 days, enough to identify their routine. After that, it is likely to make noise for a maximum of 40 seconds a day during a normal commuting schedule (2 motion triggers >=6 hours apart). Movement is likely to coincide with a noisy environment while travelling or muffled by objects touching the white casing.
 
-    Solution: More frequent/randomised checks for sound events that last longer, or wait for motion to stop to increase chance of it being heard. Apple has [suggested](https://daringfireball.net/linked/2021/04/20/moren-fine-print) this period can be adjusted.
+    **Solution**: More frequent/randomised checks for sound events that last longer, or wait for motion to stop to increase chance of it being heard. Apple has [suggested](https://daringfireball.net/linked/2021/04/20/moren-fine-print) this period can be adjusted.
 
 1. **Speaker can be disabled**
 
-    >*"An AirTag that isn't with the person who registered it for an extended period of time will also play a sound"** - [Source](https://support.apple.com/en-us/HT212227#:~:text=An%20AirTag%20that%20isn't%20with%20the%20person%20who%20registered%20it%20for%20an%20extended%20period%20of%20time%20will%20also%20play%20a%20sound)
+    >*"An AirTag that isn't with the person who registered it for an extended period of time will also play a sound"* - [Source](https://support.apple.com/en-us/HT212227#:~:text=An%20AirTag%20that%20isn't%20with%20the%20person%20who%20registered%20it%20for%20an%20extended%20period%20of%20time%20will%20also%20play%20a%20sound)
 
-    Reality: The coil can be disconnected without disassembly. The AirTag operates as normal without the voice coil connected. I have observed all sound related events still occur, just silently. Further, the magnet can be removed instead if the AirTag is updated to check for open circuit. 
+    **Reality**: The coil can be disconnected without disassembly. The AirTag operates as normal without the voice coil connected. I have observed all sound related events still occur, just silently. Further, the magnet can be removed instead if the AirTag is updated to check for open circuit. 
 
-    Impact: An attacker can easily modify an AirTag and be unknowingly placed in someone's possessions to track a target's location without them being audibly notified of its presence.
+    **Impact**: An attacker can easily modify an AirTag and be unknowingly placed in someone's possessions to track a target's location without them being audibly notified of its presence.
 
-    Solution: Use the accelerometer to measure the vibration that should be caused by the loud sound, or add a microphone.
+    **Solution**: Use the accelerometer to measure the vibration that should be caused by the loud sound, or add a microphone.
 
 2. **Location can be tracked for the whole day**
 
@@ -341,31 +341,31 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
     
     >*"Identifiers rotate several times per day"* - [Source](https://youtu.be/DEbm2iG1TNU?t=117)
 
-    Reality: The Airtag changes the identity it broadcasts once per day, at 04:00AM local. Alternatively, it chnages once every 24 hours after a power cycle while separated from its owner's device. Apple requires Bluetooth accessories to change their identity every 15 minutes, including other FindMy devices. AirTag only updates the last byte of its BLE advertisement data. The BLE device adress, and public key, remain static until the next day. 
+    **Reality**: The Airtag changes the identity it broadcasts once per day, at 04:00AM local. Alternatively, it chnages once every 24 hours after a power cycle while separated from its owner's device. Apple requires Bluetooth accessories to change their identity every 15 minutes, including other FindMy devices. AirTag only updates the last byte of its BLE advertisement data. The BLE device adress, and public key, remain static until the next day. 
 
-    Impact: An AirTag user can be uniquely identified and tracked, by anybody within Bluetooth range, for the remainder of the day. This is likely to include going to their home.
+    **Impact**: An AirTag user can be uniquely identified and tracked, by anybody within Bluetooth range, for the remainder of the day. This is likely to include going to their home.
 
-    Solution: Update the public key more frequently than every 24 hours, but less often than every 15 minutes so that the "AirTag Found Moving With You" alert is still possible.
+    **Solution**: Update the public key more frequently than every 24 hours, but less often than every 15 minutes so that the "AirTag Found Moving With You" alert is still possible.
 
 1.  **Location can be spoofed**
 
     >*"If AirTag is separated from its owner and out of Bluetooth range, the Find My network can help track it down."* - [Source](https://www.apple.com/uk/newsroom/2021/04/apple-introduces-airtag/#:~:text=If%20AirTag%20is%20separated%20from%20its%20owner%20and%20out%20of%20Bluetooth%20range,%20the%20Find%20My%20network%20can%20help%20track%20it%20down.)
 
-    Reality: AirTags are identified only by their public key which is broadcast over BLE advertising packets. There is no authentication with this identifier. Any nearby BLE device can capture these idendtities and replay them to appear as the genuine AirTag.
+    **Reality**: AirTags are identified only by their public key which is broadcast over BLE advertising packets. There is no authentication with this identifier. Any nearby BLE device can capture these idendtities and replay them to appear as the genuine AirTag.
 
-    Impact: An atacker could steal a personal item containing an AirTag and record the current public identity before removing the battery. This identity can be relayed to any BLE device in a decoy location to give the owner a false search area to recover their property. 
+    **Impact**: An atacker could steal a personal item containing an AirTag and record the current public identity before removing the battery. This identity can be relayed to any BLE device in a decoy location to give the owner a false search area to recover their property. 
 
-    Solution: The FindMy app on the owner's phone could filter out fast moving location reports which are unrealistic, or that use expired identities. Apple's backend cannot do this as the location reports are end to end encrypted. Appending an authentication tag to the BLE packet is difficult due to the already limited payload size.
+    **Solution**: The FindMy app on the owner's phone could filter out fast moving location reports which are unrealistic, or that use expired identities. Apple's backend cannot do this as the location reports are end to end encrypted. Appending an authentication tag to the BLE packet is difficult due to the already limited payload size.
 
 1.  **"AirTag Found Moving With You" alert can be avoided**
     
-    >Find My will notify you if an unknown AirTag is seen moving with you over time. - [Source](https://support.apple.com/en-us/HT212227#:~:text=Find%20My%20will%20notify%20you%20if%20an%20unknown%20AirTag%20is%20seen%20moving%20with%20you%20over%20time)
+    >*"Find My will notify you if an unknown AirTag is seen moving with you over time."* - [Source](https://support.apple.com/en-us/HT212227#:~:text=Find%20My%20will%20notify%20you%20if%20an%20unknown%20AirTag%20is%20seen%20moving%20with%20you%20over%20time)
 
-    Reality: This is a good feature for those with iOS devices. However, it is difficult to make reliable without false positives from being near other AirTag owners. To help avoid this, Apple checks for remaining unknown AirTags when the iOS device reaches known locations such as home.
+    **Reality**: This is a good feature, for those with iOS devices. However, it is difficult to make reliable without false positives from being near other AirTag owners. To help avoid this, Apple checks for remaining unknown AirTags when the iOS device reaches known locations such as home.
 
-    Impact: An AirTag could be reprogrammed to change its identity faster than the time window that triggers this alert, instead of the default 24 hours. Alternatively, several valid identities could be recorded and a custom BLE device programmed to cycle through them fast enough to appaer as several different AirTags and avoid triggering the alert.
+    **Impact**: An AirTag could be reprogrammed to change its identity faster than the time window that triggers this alert, instead of the default 24 hours. Alternatively, several valid identities could be recorded and a custom BLE device programmed to cycle through them fast enough to appaer as several different AirTags and avoid triggering the alert.
 
-    Solution: This is difficult to solve, but it would help to let the user choose the time window that triggers the alert to a value that works best for their travel habbits.
+    **Solution**: This is difficult to solve, but it would help to let the user choose the time window that triggers the alert to a value that works best for their travel habbits.
 
 ## Security Issues
 
