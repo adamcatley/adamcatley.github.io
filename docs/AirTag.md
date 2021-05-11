@@ -141,6 +141,8 @@ Playing sound uses >3000x more power than being asleep, arond 8mA, even without 
 
 The SPI flash can be accessed by following [this guide](https://colinoflynn.com/2021/05/apple-airtag-teardown-test-point-mapping/).
 
+### Accelerometer
+
 ### Power
 
 There are 2 positive battery terminals. Both need 3V applied to boot the AirTag.
@@ -189,6 +191,8 @@ Byte #|Value|Description
 31|Varies|Crypto counter value? Changes every 15 minutes to a random value
 
 According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data contains a NIST EC P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. The other 5 bytes are cleverly used as the device's Bluetooth address. This is how Apple fits a public key in a single BLE packet. As demonstrated [here](https://github.com/seemoo-lab/openhaystack/blob/ffc5170ea4b4ceb1ad84e4f89324d6e666ffc7c3/Firmware/ESP32/main/openhaystack_main.c#L107).
+
+There also seems to be a way to predict part of the future Bluetooth address, but this needs more investigation.
 
 Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting. This could be investigated further to add some kind of Android support, although an Apple ID is needed to benefit from the FindMy network.
 
@@ -305,21 +309,71 @@ The current consumption for many of the AirTag's wake up events have been captur
 
 TODO
 
-## Privacy
+## Privacy Concerns
 
-The Bluetooth address only changes once a day (at 2am UTC). Further, only the last of the 31 advertisement bytes changes during the day. This makes it easy to track anyone unknowingly carrying an AirTag for the rest of their daily routine (eg to their home).
+While it is possible to use other prodcuts similar to AirTag to track people, they cannot benefit from the unmatched global coverage of the FindMy network. This makes the AirTag a more appealing device to people with malicious intent and so privacy features are important.
 
-There also seems to be a way to predict part of the future Bluetooth address, but this needs more investigation.
+Let's look at how reality compares to the claims Apple makes about the AirTag privacy features, when the identified security issues are considered.
 
-The AirTag seems perfectly happy to operate as normal wihout the voice coil connected. This seems to be poor protection for the part of Apple's privacy claims that involve making a sound to notify nearby people they may be being tracked.
+1. **Sound alerts are infrequent and unlikely**
 
-## Security
+    >*"When moved, any AirTag separated for a period of time from the person who registered it will make a sound to alert those nearby"* - [Source](https://support.apple.com/en-us/HT212227#:~:text=any%20AirTag%20separated%20for%20a%20period%20of%20time%20from%20the%20person%20who%20registered%20it%20will%20make%20a%20sound%20to%20alert%20those%20nearby)
 
-### Assets
+    Reality: Sound alerts don't start until three **days** after separation. Even then, they only happen once motion is detected, for a maximum of 20 seconds of detected motion. The AirTag is then silent for 6 hours at a time between waiting for motion to make sound for a maximum of 20 seconds. 
 
-TODO
+    Impact: An AirTag unknowingly placed in someone's possessions can be used to track them for at least 3 days, enough to identify their routine. After that, it is likely to make noise for a maximum of 40 seconds a day during a normal commuting schedule (2 motion triggers >=6 hours apart). Movement is likely to coincide with a noisy environment while travelling or muffled by objects touching the white casing.
+
+    Solution: More frequent/randomised checks for sound events that last longer, or wait for motion to stop to increase chance of it being heard. Apple has [suggested](https://daringfireball.net/linked/2021/04/20/moren-fine-print) this period can be adjusted.
+
+1. **Speaker can be disabled**
+
+    >*"An AirTag that isn't with the person who registered it for an extended period of time will also play a sound"** - [Source](https://support.apple.com/en-us/HT212227#:~:text=An%20AirTag%20that%20isn't%20with%20the%20person%20who%20registered%20it%20for%20an%20extended%20period%20of%20time%20will%20also%20play%20a%20sound)
+
+    Reality: The coil can be disconnected without disassembly. The AirTag operates as normal without the voice coil connected. I have observed all sound related events still occur, just silently. Further, the magnet can be removed instead if the AirTag is updated to check for open circuit. 
+
+    Impact: An attacker can easily modify an AirTag and be unknowingly placed in someone's possessions to track a target's location without them being audibly notified of its presence.
+
+    Solution: Use the accelerometer to measure the vibration that should be caused by the loud sound, or add a microphone.
+
+2. **Location can be tracked for the whole day**
+
+    >*"Bluetooth signal identifiers transmitted by AirTag rotate frequently to prevent unwanted location tracking"* - [Source](https://www.apple.com/uk/newsroom/2021/04/apple-introduces-airtag/#:~:text=Bluetooth%20signal%20identifiers%20transmitted%20by%20AirTag%20rotate%20frequently%20to%20prevent%20unwanted%20location%20tracking.)
+    
+    >*"Identifiers rotate several times per day"* - [Source](https://youtu.be/DEbm2iG1TNU?t=117)
+
+    Reality: The Airtag changes the identity it broadcasts once per day, at 04:00AM local. Alternatively, it chnages once every 24 hours after a power cycle while separated from its owner's device. Apple requires Bluetooth accessories to change their identity every 15 minutes, including other FindMy devices. AirTag only updates the last byte of its BLE advertisement data. The BLE device adress, and public key, remain static until the next day. 
+
+    Impact: An AirTag user can be uniquely identified and tracked, by anybody within Bluetooth range, for the remainder of the day. This is likely to include going to their home.
+
+    Solution: Update the public key more frequently than every 24 hours, but less often than every 15 minutes so that the "AirTag Found Moving With You" alert is still possible.
+
+1.  **Location can be spoofed**
+
+    >*"If AirTag is separated from its owner and out of Bluetooth range, the Find My network can help track it down."* - [Source](https://www.apple.com/uk/newsroom/2021/04/apple-introduces-airtag/#:~:text=If%20AirTag%20is%20separated%20from%20its%20owner%20and%20out%20of%20Bluetooth%20range,%20the%20Find%20My%20network%20can%20help%20track%20it%20down.)
+
+    Reality: AirTags are identified only by their public key which is broadcast over BLE advertising packets. There is no authentication with this identifier. Any nearby BLE device can capture these idendtities and replay them to appear as the genuine AirTag.
+
+    Impact: An atacker could steal a personal item containing an AirTag and record the current public identity before removing the battery. This identity can be relayed to any BLE device in a decoy location to give the owner a false search area to recover their property. 
+
+    Solution: The FindMy app on the owner's phone could filter out fast moving location reports which are unrealistic, or that use expired identities. Apple's backend cannot do this as the location reports are end to end encrypted. Appending an authentication tag to the BLE packet is difficult due to the already limited payload size.
+
+1.  **"AirTag Found Moving With You" alert can be avoided**
+    
+    >Find My will notify you if an unknown AirTag is seen moving with you over time. - [Source](https://support.apple.com/en-us/HT212227#:~:text=Find%20My%20will%20notify%20you%20if%20an%20unknown%20AirTag%20is%20seen%20moving%20with%20you%20over%20time)
+
+    Reality: This is a good feature for those with iOS devices. However, it is difficult to make reliable without false positives from being near other AirTag owners. To help avoid this, Apple checks for remaining unknown AirTags when the iOS device reaches known locations such as home.
+
+    Impact: An AirTag could be reprogrammed to change its identity faster than the time window that triggers this alert, instead of the default 24 hours. Alternatively, several valid identities could be recorded and a custom BLE device programmed to cycle through them fast enough to appaer as several different AirTags and avoid triggering the alert.
+
+    Solution: This is difficult to solve, but it would help to let the user choose the time window that triggers the alert to a value that works best for their travel habbits.
+
+## Security Issues
+
+<!--- ### Assets --->
 
 ### nRF52832
+
+#### Diagnostics access
 
 The nRF52832 has Access Port Protection (APPROTECT). This disables access to the Debug Port through SWD and prevents reading out the internal flash. Colin O'Flynn has [confirmed](https://twitter.com/colinoflynn/status/1390499614860644355) that AirTags do enable this security feature.
 
@@ -328,6 +382,12 @@ However, it is known that this protection is vulnerable to side channel attacks 
 We can assume Apple are aware of this exploit as it was disclosed in Q2 2020. This would have been towards the end of the development cycle for the AirTag so it is unclear if/how Apple addresed this risk. 
 
 The privacy mechanism used by FindMy devices uses well documented cryptography and so is not dependant on confidentiality of the firmware. However, it would be possible to disable other privacy features that Apple advertise, or run completely custom firmware.
+
+#### Over the air updates
+
+#### Secure boot
+
+
 
 ### Apple U1 
 
