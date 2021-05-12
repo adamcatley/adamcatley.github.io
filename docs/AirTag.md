@@ -333,37 +333,6 @@ The firmware function that generates this URL has been [identified](https://twit
 
 [![](https://pbs.twimg.com/media/E0yLQ7mWEAA62JT?format=png)](https://twitter.com/ghidraninja/status/1390639514134237186)
 
-## Battery Life
-
-The AirTag is supplied with a CR2032 Lithium coin cell from Panasonic. This has a nominal capacity and voltage of 225mAh and 3V.
-
-![](img/airtag/CR2032%20discharge.png)
-
-I measure a 2.3µA load on the battery while the AirTag is idle. The [datasheet](https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000C321.pdf) shows the expected capacity with such a small load to be almost the whole 225mAh. The AirTag will power up from a supply of at least 2V, which works well with the cell's cut off voltage of 2.0V.
-
-This gives a **maximum battery life of at least 11 years** if the device never came out of sleep.
-
-Achieving a sleep current of 2.3µA is impressive given the nRF52832 alone uses 1.9µA (at 1.8V) while asleep with RTC running, according to its datasheet. This means the rest of the circuitry is designed to be very efficient, minimise leakage and actively shut down or remove power from unused components such as the U1 and flash.
-
-### Power traces
-
-The current consumption for many of the AirTag's wake up events have been captured and will be added here soon. You can see a preview of the BLE advertisement event at the top of the page.
-<!---
-#### Startup
-
-#### Bluetooth advertisement
-
-#### Precision finding
-
-#### Waiting for motion
-
-#### Connected
-
-#### NFC read
---->
-
-TODO
-
 ## Privacy Concerns
 
 While it is possible to use other products similar to AirTag to track people, they cannot benefit from the unmatched global coverage of the FindMy network. This makes the AirTag a more appealing device to people with malicious intent and so privacy features are important.
@@ -471,11 +440,14 @@ It is unclear whether there are any signature checks on OTA update images via DF
 
 >Is it possible to make the AirTag even smaller to put it inside other devices? 
 
-The host device's battery could be used for power, with the device casing acting as a diaphragm for the speaker by attaching the voice coil.
+The host device's battery could be used for power, with the device casing acting as a diaphragm for the speaker by attaching the voice coil. The smallest possible dimensions while retaining all functionality is:
 
-The stock dimensions are **31.9mm diameter and 8.0mm heigh**.
+Version|Diameter|Height
+-|-|-
+Stock|32mm|8.0mm
+Disassembled|26mm|3.3mm
 
-The smallest dimensions possible while retaining functionality are **26mm diameter and 3.3mm heigh**.
+I demonstrated this idea is possible by adding an AirTag to a commonly misplaced item: a remote control. All functionality remains, as shown [here]().
 
 ![](img/airtag/remote.jpg)
 
@@ -492,5 +464,33 @@ The startup sound ([example](https://www.youtube.com/watch?v=vniKeX-O2Xk)) is ma
 ### Add support for Android devices
 
 The firmware could be modified to allow connections from Android devices. An Apple ID would still be needed to make use of the FindMy network to authenticate downloading encrypted location records.
+
+## Battery Life
+
+The AirTag is supplied with a CR2032 Lithium coin cell from Panasonic. This has a nominal capacity and voltage of 225mAh and 3V.
+
+![](img/airtag/CR2032%20discharge.png)
+
+I measure a 2.3µA load on the battery while the AirTag is idle. The [datasheet](https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000C321.pdf) shows the expected capacity with such a small load to be almost the whole 225mAh. The AirTag will power up from a supply of at least 2V, which works well with the cell's cut off voltage of 2.0V.
+
+This gives a **maximum battery life of at least 11 years** if the device never came out of sleep.
+
+Achieving a sleep current of 2.3µA is impressive given the nRF52832 alone uses 1.9µA (at 1.8V) while asleep with RTC running, according to its datasheet. This means the rest of the circuitry is designed to be very efficient, minimise leakage and actively shut down or remove power from unused components such as the U1 and flash.
+
+### Power traces
+
+The current consumption for many of the AirTag's wake up events have been captured and will be added here soon. You can see a preview of the BLE advertisement event at the top of the page.
+
+#### Startup
+
+#### Bluetooth advertisement
+
+#### Precision finding
+
+#### Waiting for motion
+
+#### Connected
+
+#### NFC read
 
 *This page is a work in progress...*
