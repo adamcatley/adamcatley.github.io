@@ -54,9 +54,39 @@ Apple document the privacy features of the FindMy network, including end to end 
 
 Support for the AirTag was introduced in iOS 14.5. Apple lists which iPhone, iPod Touch and iPad devices are supported [here](https://support.apple.com/en-gb/HT211348).
 
+<!--
 ### Existing trackers
 
 TODO
+
+-->
+
+<!---
+## Theory of Operation
+
+TODO
+
+### Architecture
+
+TODO
+
+--->
+
+## Software
+
+### Operating States
+
+I will try to make this into a state flow diagram soon. For now, these are the main states the AirTag can be in:
+
+- **Not registered**: When the AirTag is brand new, has been [reset](https://support.apple.com/en-gb/HT212251#:~:text=repeat%20the%20process%20four%20more%20times,%20removing%20and%20replacing%20the%20battery), or has been [removed](https://support.apple.com/en-in/guide/iphone/iph869abb075/ios) from the FindMy network. Waits to be connected to while advertising itself every 33ms.
+- **Initialisation**: The AirTag is being registered to an Apple ID and a public/private key pair is generated and shared between the AirTag and the connected iOS device.
+- **Connected**: The owner's device is in range. No broadcasts occur.
+- **Disconnected**: The owner's device is out of range. Broadcasts identity every 2000ms.
+- **Out of sync**: Happens when an AirTag reboots while separated from its owner's device. Acts like `Disconnected` but abosulute time is lost so events are relative to time since power up.Idenity resets to initial value.,
+- **Lost**: Occurs 3 days after `Disconnected` or `Out of sync` begin. Moves to `Waiting for motion` every 6 hours.
+- **Waiting for motion**: Samples the accelerometer every 10 seconds until motion is detected.
+- **Sound alert**: A command to play a noise is received from either a connected device, or by detecting motion. Lasts a maximum of 20 seconds.
+- **Precision finding**: Triggered by the owner's device while in `Connected`. Is overriden by `Sound alert`
 
 ## Hardware 
 
@@ -65,15 +95,15 @@ TODO
 ### Teardown
 
 There are several documented teardowns, listed in chronological order:
-- [Apr 30] [@haruki_kawaiii](https://twitter.com/haruki_kawaiii/status/1388012416613507072)
-- [Apr 30] My own [Twitter thread](https://twitter.com/adamcatley/status/1388196843184697346)
-- [Apr 30] [DBrand](https://dbrand.com/shop/special-edition/teardown) skins ([front](https://dbrand.com/sites/default/files/dba/printed-skins-ppv/teardown/apple-airtag/sig_teardown-gloss_0.jpg), [back](https://dbrand.com/sites/default/files/dba/printed-skins-ppv/teardown/apple-airtag/sig_teardown-gloss_1.jpg) images)
-- [May 3] [@tb69rr](https://twitter.com/tb69rr/status/1389183123234119680)
-- [May 3] [iFixit](https://www.ifixit.com/News/50145/airtag-teardown-part-one-yeah-this-tracks) article (inlcuding x-ray [video](https://valkyrie.cdn.ifixit.com/media/2021/05/01153224/drill-xray-1.mp4) and high  quality [front](https://valkyrie.cdn.ifixit.com/media/2021/05/03133827/AirTags_33.jpg), [back](https://valkyrie.cdn.ifixit.com/media/2021/05/03133839/AirTags_48.jpg) images)
+
+- [Apr 30] My own [Twitter thread](https://twitter.com/adamcatley/status/1388196843184697346), [@haruki_kawaiii](https://twitter.com/haruki_kawaiii/status/1388012416613507072), [DBrand](https://dbrand.com/shop/special-edition/teardown) skins ([front](https://dbrand.com/sites/default/files/dba/printed-skins-ppv/teardown/apple-airtag/sig_teardown-gloss_0.jpg), [back](https://dbrand.com/sites/default/files/dba/printed-skins-ppv/teardown/apple-airtag/sig_teardown-gloss_1.jpg) images)
+- [May 3] [iFixit](https://www.ifixit.com/News/50145/airtag-teardown-part-one-yeah-this-tracks) article (inlcuding x-ray [video](https://valkyrie.cdn.ifixit.com/media/2021/05/01153224/drill-xray-1.mp4) and high  quality [front](https://valkyrie.cdn.ifixit.com/media/2021/05/03133827/AirTags_33.jpg), [back](https://valkyrie.cdn.ifixit.com/media/2021/05/03133839/AirTags_48.jpg) images), [@tb69rr](https://twitter.com/tb69rr/status/1389183123234119680)
 - [May 4] [JerryRigEverything](https://www.youtube.com/watch?v=5MaPqUYAetg) video
 - [May 7] Colin O'Flynn [Twitter thread](https://twitter.com/colinoflynn/status/1390432081126297606) and related [blog post](https://colinoflynn.com/2021/05/apple-airtag-teardown-test-point-mapping/)
 
-Removing the PCB is likely to cause damage due to the thin PCB and being soldered to the plastic tray.
+Note: Removing the PCB is likely to cause damage due to the thin PCB and being soldered to the plastic tray.
+
+There are also teardowns of alternative tracking devices with similar hardware, such as the Samsung [SmartTag](https://twitter.com/LucaBongiorni/status/1392109083998752776) and [SmartTag+](https://twitter.com/LucaBongiorni/status/1392106994958483463).
 
 #### Revisions
 
@@ -84,12 +114,9 @@ The bottom right numbers look like a manufacturing data code (eg. "2920 17" coul
 - Europe is `5220`, a few months later
 - Asia is `1021`, a few months later and only a few weeks before launch
 
-There is also a letter to the left of the 3 big pads on the left. This could relate to the U1 chip underneath
-- This is either `A` (Europe) or `C` (rest of world). `A` also comes with a 3 digit number, C does not.
+There is also a letter to the left of the 3 big pads on the left. This could relate to the U1 chip underneath. This is either `A` and a 3 digit number (Europe) or `C` (rest of world).
 
 A constant value `820-01736-A` is on the silkscreen layer and looks like Apple's internal part number and revision (`A`) for the PCB.
-
-More samples are needed to understand better.
 
 ### PCB Overview
 
@@ -166,26 +193,11 @@ The SPI flash can be accessed by following [this guide](https://colinoflynn.com/
 
 There are 2 positive battery terminals. Both need 3V applied to boot the AirTag.
 
-However, only the left side battery terminal powers the electronics. The voltage on the right-side terminal is sensed but consumes only ~50nA in most modes. *It could be used to power the U1 chip when UWB is activated for Precision Finding.*
+However, only the left side battery terminal powers the electronics. The voltage on the right-side terminal is sensed but consumes only ~50nA in all modes. 
 
 There are 5 100uF capacitors around the edge of the top side of the PCB. They keep the device powered up for several seconds with the battery removed. This likely helps with the [reset procedure](https://support.apple.com/en-gb/HT212251#:~:text=repeat%20the%20process%20four%20more%20times,%20removing%20and%20replacing%20the%20battery) of removing the battery 5 times in short succession.
 
-<!---
-## Theory of Operation
-
-TODO
-
-### Architecture
-
-TODO
-
-### States
-
-TODO
-
---->
-
-## Wireless Communication
+The AirTag does not retain the current time after a power cycle, until it reconnect to its owner device.
 
 ### Bluetooth LE
 
@@ -248,6 +260,8 @@ From the FCC [test report](https://fccid.io/BCGA2187/Test-Report/12791034-E2V3-F
 - 500MHz Bandwidth
 - BPSK
 - 1 antenna [(above)](#antennas)
+
+
 
 Currently untested.
 
@@ -331,9 +345,22 @@ This gives a **maximum battery life of at least 11 years** if the device never c
 
 Achieving a sleep current of 2.3µA is impressive given the nRF52832 alone uses 1.9µA (at 1.8V) while asleep with RTC running, according to its datasheet. This means the rest of the circuitry is designed to be very efficient, minimise leakage and actively shut down or remove power from unused components such as the U1 and flash.
 
-### Energy traces
+### Power traces
 
 The current consumption for many of the AirTag's wake up events have been captured and will be added here soon. You can see a preview of the BLE advertisement event at the top of the page.
+<!---
+#### Startup
+
+#### Bluetooth advertisement
+
+#### Precision finding
+
+#### Waiting for motion
+
+#### Connected
+
+#### NFC read
+--->
 
 TODO
 
@@ -369,7 +396,7 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
     
     >*"Identifiers rotate several times per day"* - [Source](https://youtu.be/DEbm2iG1TNU?t=117)
 
-    **Reality**: The Airtag changes the identity it broadcasts once per day, at 04:00AM local. Alternatively, it changes once every 24 hours after a power cycle while separated from its owner's device. Apple requires Bluetooth accessories to change their identity every 15 minutes, including other FindMy devices. AirTag only updates the last byte of its BLE advertisement data. The BLE device address, and public key, remain static until the next day. 
+    **Reality**: The Airtag changes the identity it broadcasts once per day, at 04:00AM local, when it is separated from its owner's device. Alternatively, it changes once every 24 hours after a power cycle occurs. Apple requires Bluetooth accessories to change their identity every 15 minutes, including other FindMy devices. However, AirTag only updates the last byte of its BLE advertisement data. The BLE device address, and public key, remain static until the next day. Note: AirTag only starts broadcasting when it is away from its owner's device, with a new identity generated upon disconnection.
 
     **Impact**: An AirTag user can be uniquely identified and tracked, by anybody within Bluetooth range, for the remainder of the day. This is likely to include going to their home.
 
@@ -395,13 +422,25 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
 
     **Solution**: This is difficult to solve, but it would help to let the user choose the time window that triggers the alert to a value that works best for their travel habits.
 
+    1.  **Location history could be decrypted**
+
+    >*"The Find My network is end-to-end encrypted so that only the owner of a device has access to its location data"* - [Source](https://www.apple.com/uk/newsroom/2021/04/apple-introduces-airtag/#:~:text=Communication%20with%20the%20Find%20My%20network%20is%20end-to-end%20encrypted%20so%20that%20only%20the%20owner%20of%20a%20device%20has%20access%20to%20its%20location%20data)
+
+    Reality: Apple [explains](https://support.apple.com/en-gb/guide/security/sec60fd770ba/1/web/1) the private key pair used to generate new identities is synced across devices. This means the AirTag needs to store secrets without a suitable secure memory. Note: Apple may have modified the FindMy encryption mechanism to be more appropriate for the AirTag's insecure hardware.
+
+    Impact: A lost AirTag could be analysed to extract the private key from memory. From this the public key(s) can be calculated to download the owner's location records and decrypt with the now known private key(s).
+
+    Solution: Only store secret key in volatile memory. I have seen behaviour that indicates the AirTag may do this to a limited extent, at least until it is separated from its owner for 3 days and then retains its identity between power cycles.
+
 ## Security Issues
+
+There is a surprising lack of basic security controls in the AirTag. The result is that non of the data in the device seems to be protected from tampering or information disclosure.
 
 <!--- ### Assets --->
 
 ### nRF52832
 
-#### Diagnostics access
+#### Unprotected internal memory
 
 The nRF52832 has Access Port Protection (APPROTECT). This disables access to the Debug Port through SWD and prevents reading out the internal flash. AirTags are [confirmed](https://twitter.com/colinoflynn/status/1390499614860644355) to have this security feature enabled.
 
@@ -413,15 +452,18 @@ The privacy mechanism used by FindMy devices uses well-documented cryptography a
 
 #### (Lack of) Secure Boot
 
-Modifying the firmware does not result in a boot failure.
+Modifying the firmware does not result in a boot failure. This indicates the signature of the firmware is not checked against a trusted Apple certificate.
 
 #### Over the air updates
 
-It is unclear whether there are any signature checks on OTA update images via DFU. If not, this would raise the possibility of malicious firmware spreading itself to any nearby AirTag.
+It is unclear whether there are any signature checks on OTA update images via DFU. If not, this could raise many severe possibilities, such as remotely disabling privacy featues, extracting private keys, or even malicious firmware spreading itself to any nearby AirTag as a worm.
 
-### Insecure flash
+### Insecure storage
 
-The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208) and contains several assets. It is yet to be confirmed where/if the public/private key pair is stored.
+- The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208) and contains several assets. 
+- The nRF52832 does not have any secure storage functionality.
+- It is unknown if th U1 has secure storage capability.
+- It is yet to be confirmed where/if the root public/private key pair is stored.
 
 ## Mods
 
@@ -449,6 +491,6 @@ The startup sound ([example](https://www.youtube.com/watch?v=vniKeX-O2Xk)) is ma
 
 ### Add support for Android devices
 
-The firmware could be modified to allow connections from Android devices. An Apple ID would still be needed to make use of 
+The firmware could be modified to allow connections from Android devices. An Apple ID would still be needed to make use of the FindMy network to authenticate downloading encrypted location records.
 
 *This page is a work in progress...*
