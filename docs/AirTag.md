@@ -27,7 +27,7 @@ Skip to: [Security](#security-issues), [Privacy](#privacy-concerns), or [Hardwar
 - BLE connection interval of **1 second** when near its owner's device
 - nRF needs at least **~1.9V** battery voltage to boot up
 - 32Mbit flash storage is **unencrypted**
-- nRF programming interface (**SWD**) easily accessible via test pads
+- nRF programming interface (**SWD**) easily accessible via test pads and can be unlocked
 
 ## Background
 
@@ -185,7 +185,7 @@ Playing sound uses >3000x more power than being asleep, around 8mA, even without
 
 The SPI flash can be accessed by following [this guide](https://colinoflynn.com/2021/05/apple-airtag-teardown-test-point-mapping/).
 
-### Accelerometer
+<!--### Accelerometer-->
 
 ### Power
 
@@ -199,7 +199,7 @@ The AirTag does not retain the current time after a power cycle until it reconne
 
 ### Bluetooth LE
 
-The nRF52832 supports BLE 5.2 and has a single 2.4GHz antenna.
+The nRF52832 supports BLE 5.2 and has a single 2.4GHz antenna. A Nordic SoftDevice is used to implement the BLE stack, likely [S112](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fug_gsg_ses%2FUG%2Fgsg%2Fsoftdevices.html).
 
 #### Advertising data
 
@@ -217,7 +217,7 @@ Byte #|Value|Description
 2-3|0x004C|Apple's [company identifier](https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
 4|0x12|Apple payload type to indicate a FindMy network broadcast
 5|0x19|Apple payload length (31 - 6 = 25 = 0x19)
-6|0x10|Status byte)
+6|0x10|Status byte
 7-29|Varies|EC P-224 public key used by FindMy network. Changes daily
 30|0-3|Upper 2 bits of first byte of ECC public key
 31|Varies|Crypto counter value? Changes every 15 minutes to a random value
@@ -436,7 +436,7 @@ Several people have looked into the security of Apple's AirTag and the FindMy ne
 - [OpenHaystack](https://github.com/seemoo-lab/openhaystack) - an open source framework to spoof genuine AirTags and add custom devices on the FindMy network.
 - Research [paper](https://arxiv.org/pdf/2103.02282.pdf) - analysing the privacy and security of the FindMy network from the same researchers as OpenHaystack.
 - [SendMy](https://positive.security/blog/send-my) - Exploiting the lack of identity authentication to send arbritary data through the FindMy network, and potentially exfiltrate data from secure locations.
-- [@stacksmahing](https://twitter.com/ghidraninja) has [demonstrated](https://twitter.com/ghidraninja/status/1391148503196438529) the nRF52 glitch on the AirTag
+- [@stacksmahing](https://twitter.com/ghidraninja) has [demonstrated](https://twitter.com/ghidraninja/status/1391148503196438529) the nRF52 glitch on the AirTag.
 
 ## Mods
 
@@ -456,6 +456,10 @@ Disassembled|26mm|3.3mm
 I demonstrated this idea is possible by adding an AirTag to a commonly misplaced item: a remote control. All functionality remains, as shown [here]().
 
 ![](img/airtag/remote.jpg)
+
+#### Credit card
+
+[Andrew Ngai](https://www.youtube.com/watch?v=Dze4L1YuJYA) repurposed a disassemled AirTag, into the form factor of a credit card, to be able to track his wallet.
 
 ### Use custom sounds
 
@@ -485,18 +489,32 @@ Achieving a sleep current of 2.3µA is impressive given the nRF52832 alone uses 
 
 ### Power traces
 
-The current consumption for many of the AirTag's wake up events have been captured and will be added here soon. You can see a preview of the BLE advertisement event at the top of the page.
+The current consumption for many of the AirTag's wake up events have been captured and more will be added here soon. 
 
-#### Startup
+Note: some traces have a recognisable capacitor charge/discharge curve due to bulk capacitors not being removed from the PCB during the test.
+
+<!--#### Startup-->
 
 #### Bluetooth advertisement
 
+0.4mA wake up and prepare. BLE TX at 6-7mA on the 3 advertising channels (37,38,39). ~4ms total event length. Occurs every 2000ms
+
+![](img/airtag/ble-trace.jpg)
+
+1ms/div (horizontal). 1mA/div (vertical).
+
 #### Precision finding
 
-#### Waiting for motion
+5ms wide spikes at ~25mA then 50ms of base curent at ~4mA. BLE connection events every 30ms. 
 
-#### Connected
+![](img/airtag/uwb-trace.jpg)
 
-#### NFC read
+50ms/div (horizontal). 5mA/div (vertical). Precision finding active at 0s, disabled at 0.4s.
+
+<!--#### Waiting for motion-->
+
+<!--#### Connected-->
+
+<!--#### NFC read-->
 
 *This page is a work in progress...*
