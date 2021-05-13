@@ -4,7 +4,7 @@ nav_order: 1
 
 # Apple AirTag Reverse Engineering
 
-This page serves as a central resource for technical details of the AirTag: hacks, security research, modifications, teardowns and more. It is a combination of my work and publicly available information. It will be updated as more is discovered.
+This page serves as a central resource for technical details of the AirTag: hacks, security research, modifications, teardowns and more. It is a combination of my work and publicly available information. It will be updated as more is discovered. [What is an AirTag?](https://www.apple.com/airtag/)
 
 Skip to: [Security](#security-issues), [Privacy](#privacy-concerns), or [Hardware](#hardware).
 
