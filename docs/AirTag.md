@@ -17,7 +17,7 @@ Skip to: [Security](#security-issues), [Privacy](#privacy-concerns), or [Hardwar
 - Uses **off the shelf** components, apart from Apple's U1 chip for UWB
 - The popular **nRF52832** is used for BLE and NFC
 - Sleep current consumption of **2.3µA** gives over **10 years** of potential battery life
-- Updates BLE address and public key **once a day** at 02:00 UTC
+- Updates BLE address and public key **once a day** at 04:00am
 - Updates last byte of advertisement data every **15 minutes**
 - Goes into a lost mode exactly **3 days** after being away from its owner's device
 - Makes noise once every **6 hours** while in lost mode and movement is detected
@@ -82,11 +82,11 @@ I will try to make this into a state flow diagram soon. For now, these are the m
 - **Initialisation**: The AirTag is being registered to an Apple ID and a public/private key pair is generated and shared between the AirTag and the connected iOS device.
 - **Connected**: The owner's device is in range. No broadcasts occur.
 - **Disconnected**: The owner's device is out of range. Broadcasts identity every 2000ms.
-- **Out of sync**: Happens when an AirTag reboots while separated from its owner's device. Acts like `Disconnected` but abosulute time is lost so events are relative to time since power up.Idenity resets to initial value.,
+- **Out of sync**: Happens when an AirTag reboots while separated from its owner's device. Acts like `Disconnected` but absolute time is lost so events are relative to time since power-up. Identity resets to initial value.,
 - **Lost**: Occurs 3 days after `Disconnected` or `Out of sync` begin. Moves to `Waiting for motion` every 6 hours.
 - **Waiting for motion**: Samples the accelerometer every 10 seconds until motion is detected.
-- **Sound alert**: A command to play a noise is received from either a connected device, or by detecting motion. Lasts a maximum of 20 seconds.
-- **Precision finding**: Triggered by the owner's device while in `Connected`. Is overriden by `Sound alert`
+- **Sound alert**: A command to play a noise is received from either a connected device or by detecting motion. Lasts a maximum of 20 seconds.
+- **Precision finding**: Triggered by the owner's device while in `Connected`. Is overridden by `Sound alert`
 
 ## Hardware 
 
@@ -107,7 +107,7 @@ There are also teardowns of alternative tracking devices with similar hardware, 
 
 #### Revisions
 
-The various teardowns reveal variations in the PCB markings in the top copper layer. This will be useful if it is determined that early production runs didnt enable all security features to lock down the units.
+The various teardowns reveal variations in the PCB markings in the top copper layer. This will be useful if it is determined that early production runs didn't enable all security features to lock down the units.
 
 The bottom right numbers look like a manufacturing data code (eg. "2920 17" could be the 29th week of 2020, batch 17). From the available samples:
 - US devices are in the range `2920, 3020, 3120`
@@ -122,12 +122,12 @@ A constant value `820-01736-A` is on the silkscreen layer and looks like Apple's
 
 ![](img/airtag/PCB.jpg)
 
-    🟠 Nordic nRF52832 SoC with BLE and NFC, plus 32MHz and 32.768kHz cystals
-    ⚪ Apple U1 UWB Tranceiver
-    🔴 GD25LE32D 32Mbit NOR flash
+    🟠 Nordic nRF52832 SoC with BLE and NFC, plus 32MHz and 32.768kHz crystals
+    ⚪ Apple U1 UWB Transceiver
+    🔴 GigaDevice GD25LE32D 32Mbit NOR flash
     🟢 Bosch BMA280 accelerometer
-    🔵 MAX98357AEWL audio amp 
-    🟡 TI TPS62746 DC buck converter
+    🔵 Maxim MAX98357AEWL audio amplifier
+    🟡 TI TPS62746 DC-DC buck converter
     🟣 TI TLV9001IDPWR opamp
     ⚫ 100uF Electrolytic Capacitors (5x)
     🟤 Unknown. Unable to decode markings
@@ -197,17 +197,17 @@ However, only the left side battery terminal powers the electronics. The voltage
 
 There are 5 100uF capacitors around the edge of the top side of the PCB. They keep the device powered up for several seconds with the battery removed. This likely helps with the [reset procedure](https://support.apple.com/en-gb/HT212251#:~:text=repeat%20the%20process%20four%20more%20times,%20removing%20and%20replacing%20the%20battery) of removing the battery 5 times in short succession.
 
-The AirTag does not retain the current time after a power cycle, until it reconnect to its owner device.
+The AirTag does not retain the current time after a power cycle until it reconnects to its owner device.
 
 ### Bluetooth LE
 
-The nRF52832 supports BLE 5.2.
+The nRF52832 supports BLE 5.2 and has a single 2.4GHz antenna.
 
 #### Advertising data
 
 This section describes the Bluetooth activity when the AirTag is registered to the FindMy network. 
 
-- Address type: Random Static (changes daily, first 5 bytes of public key)
+- Address type: Random Static (changes daily, first 6 bytes of public key)
 - Advertising PDU type: Connectable undirected (ADV_IND)
 - Advertising period: 2000ms
 - Advertising transmit time: 4ms (including wake up)
@@ -217,18 +217,18 @@ Byte #|Value|Description
 0|0x1E|Advertising data length: 31 (the maximum allowed)
 1|0xFF|Advertising data type: Manufacturer Specific Data
 2-3|0x004C|Apple's [company identifier](https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
-4|0x12|Apple payload type to indicate a FindMy network broadcast?
+4|0x12|Apple payload type to indicate a FindMy network broadcast
 5|0x19|Apple payload length (31 - 6 = 25 = 0x19)
-6|0x10|FindMy device type to indicate an AirTag? (0x00 seen from other Apple devices)
+6|0x10|Status byte)
 7-29|Varies|EC P-224 public key used by FindMy network. Changes daily
 30|0-3|Upper 2 bits of first byte of ECC public key
 31|Varies|Crypto counter value? Changes every 15 minutes to a random value
 
-According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data contains a NIST EC P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. The other 5 bytes are cleverly used as the device's Bluetooth address. This is how Apple fits a public key in a single BLE packet. As demonstrated [here](https://github.com/seemoo-lab/openhaystack/blob/ffc5170ea4b4ceb1ad84e4f89324d6e666ffc7c3/Firmware/ESP32/main/openhaystack_main.c#L107).
+According to Apple's [documentation](https://support.apple.com/en-gb/guide/security/sece994d0126/1/web/1#:~:text=P-224%20public%20key%20Pi%20obtained%20from%20the%20Bluetooth%20payload), the BLE advertising data contains a NIST EC P-224 public key. This key would be at least 28+1 bytes long but only 23+1 bytes in the advertising data ever change. The other 6 bytes are cleverly used as the device's Bluetooth address. This is how Apple fits a public key in a single BLE packet. As demonstrated [here](https://github.com/seemoo-lab/openhaystack/blob/ffc5170ea4b4ceb1ad84e4f89324d6e666ffc7c3/Firmware/ESP32/main/openhaystack_main.c#L107).
 
 There also seems to be a way to predict part of the future Bluetooth address, but this needs more investigation.
 
-Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting. This could be investigated further to add some kind of Android support, although an Apple ID is needed to benefit from the FindMy network.
+Apple presumably uses authentication to stop non-Apple devices connecting to the AirTag, as connections are terminated by the AirTag shortly after connecting.
 
 #### Unregistered behaviour
 
@@ -245,7 +245,7 @@ Byte #|Value|Description
 
 ### UWB
 
-Uses Apple's U1 with a single antenna. Very little is known about this custom chip designed by Apple.
+Precision Finding uses Ultra-Wideband communication with Apple's U1 and a single antenna. Very little is known about this custom chip designed by Apple.
 
 It likely contains a processor as the flash chip [contains](https://twitter.com/ghidraninja/status/1390609884316635138) 64-bit ARM instructions that the nRF52832 does not support.
 
@@ -258,12 +258,10 @@ The U1 is inside a module marked USI (AirTag module marking is visible [here](ht
 From the FCC [test report](https://fccid.io/BCGA2187/Test-Report/12791034-E2V3-FCC15-519-Final-Report-5130980):
 - UWB Channel 5 (6.5GHz) and 9 (8GHz)
 - 500MHz Bandwidth
-- BPSK
+- BPSK modulation
 - 1 antenna [(above)](#antennas)
 
-
-
-Currently untested.
+Testing the Precision Finding feature gives the impression that UWB is only used to measure distance to the AirTag, not direction. The AirTag simply transmits pulses every ~60ms from its single antenna. Multiple antennas are needed on either the receiver or transmitter in order to measure direction from phase distances. BLE 5 supports this with [AoA and AoD](https://www.bluetooth.com/blog/new-aoa-aod-bluetooth-capabilities/).
 
 ### NFC
 
@@ -301,7 +299,7 @@ Apple's servers accept any combination of values and parameter names. The only o
 https://found.apple.com/airtag?sr=
 ```
 
-I don't yet have another AirTag to compare the values across different devices. For a single unit the values are persistent across power cycles, long runtime, resets and modes.
+I don't yet have another AirTag to compare the values across different devices. For a single unit, the values are persistent across power cycles, long runtime, resets and modes.
 
 #### Registered
 
@@ -343,7 +341,7 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
 
     >*"When moved, any AirTag separated for a period of time from the person who registered it will make a sound to alert those nearby"* - [Source](https://support.apple.com/en-us/HT212227#:~:text=any%20AirTag%20separated%20for%20a%20period%20of%20time%20from%20the%20person%20who%20registered%20it%20will%20make%20a%20sound%20to%20alert%20those%20nearby)
 
-    **Reality**: Sound alerts don't start until three days after separation. Even then, they only happen once motion is detected, for a maximum of 20 seconds of detected motion. The AirTag is then silent for 6 hours at a time between waiting for motion to make sound for a maximum of 20 seconds. 
+    **Reality**: Sound alerts don't start until three days after separation. Even then, they only happen once motion is detected, for a maximum of 20 seconds of detected motion. The AirTag is then silent for 6 hours at a time between waiting for motion to make a sound for a maximum of 20 seconds. 
 
     **Impact**: An AirTag unknowingly placed in someone's possessions can be used to track them for at least 3 days, enough to identify their routine. After that, it is likely to make noise for a maximum of 40 seconds a day during a normal commuting schedule (2 motion triggers >=6 hours apart). Movement is likely to coincide with a noisy environment while travelling or muffled by objects touching the white casing.
 
@@ -379,7 +377,7 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
 
     **Impact**: An attacker could steal a personal item containing an AirTag and record the current public identity before removing the battery. This identity can be relayed to any BLE device in a decoy location to give the owner a false search area to recover their property. 
 
-    **Solution**: The FindMy app on the owner's phone could filter out fast moving location reports which are unrealistic, or that use expired identities. Apple's backend cannot do this as the location reports are end to end encrypted. Appending an authentication tag to the BLE packet is difficult due to the already limited payload size.
+    **Solution**: The FindMy app on the owner's phone could filter out fast moving, unrealistic location reports, or that use expired identities. Apple's backend cannot do this as the location reports are end to end encrypted. Appending an authentication tag to the BLE packet is difficult due to the already limited payload size.
 
 1.  **"AirTag Found Moving With You" alert can be avoided**
     
@@ -395,15 +393,15 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
 
     >*"The Find My network is end-to-end encrypted so that only the owner of a device has access to its location data"* - [Source](https://www.apple.com/uk/newsroom/2021/04/apple-introduces-airtag/#:~:text=Communication%20with%20the%20Find%20My%20network%20is%20end-to-end%20encrypted%20so%20that%20only%20the%20owner%20of%20a%20device%20has%20access%20to%20its%20location%20data)
 
-    Reality: Apple [explains](https://support.apple.com/en-gb/guide/security/sec60fd770ba/1/web/1) the private key pair used to generate new identities is synced across devices. This means the AirTag needs to store secrets without a suitable secure memory. Note: Apple may have modified the FindMy encryption mechanism to be more appropriate for the AirTag's insecure hardware.
+    Reality: Apple [explains](https://support.apple.com/en-gb/guide/security/sec60fd770ba/1/web/1) the private key pair used to generate new identities is synced across devices. This means the AirTag needs to store secrets without a suitable secure memory. Note: Apple may have modified the FindMy encryption mechanism to be more appropriate for the AirTag's insecure hardware by only storing the public key.
 
     Impact: A lost AirTag could be analysed to extract the private key from memory. From this the public key(s) can be calculated to download the owner's location records and decrypt with the now known private key(s).
 
-    Solution: Only store secret key in volatile memory. I have seen behaviour that indicates the AirTag may do this to a limited extent, at least until it is separated from its owner for 3 days and then retains its identity between power cycles.
+    Solution: Only store public keys, or limit secret keys to volatile memory. I have seen behaviour that indicates the AirTag may do this to a limited extent, at least until it is separated from its owner for 3 days and then retains its identity between power cycles.
 
 ## Security Issues
 
-There is a surprising lack of basic security controls in the AirTag. The result is that non of the data in the device seems to be protected from tampering or information disclosure.
+There is a surprising lack of basic security controls in the AirTag. The result is that non of the data in the device seems to be protected from tampering or information disclosure. Apple is surely aware of this, so they must believe this is not a threat.
 
 <!--- ### Assets --->
 
@@ -417,7 +415,7 @@ However, it is known that this protection is vulnerable to side-channel attacks 
 
 We can assume Apple are aware of this exploit as it was disclosed in Q2 2020. This would have been towards the end of the development cycle for the AirTag so it is unclear if/how Apple addressed this risk. 
 
-The privacy mechanism used by FindMy devices uses well-documented cryptography and so is not dependant on the confidentiality of the firmware. However, it would be possible to disable other privacy features that Apple advertises, or run completely custom firmware.
+The privacy mechanism used by FindMy devices uses well-documented cryptography and so is not dependant on the confidentiality of the firmware. However, it would be possible to disable other privacy features that Apple advertises, extract Bluetooth pairing keys to connect to the owner's phone, or run completely custom firmware.
 
 #### (Lack of) Secure Boot
 
@@ -432,7 +430,7 @@ It is unclear whether there are any signature checks on OTA update images via DF
 - The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208) and contains several assets. 
 - The nRF52832 does not have any secure storage functionality.
 - It is unknown if th U1 has secure storage capability.
-- It is yet to be confirmed where/if the root public/private key pair is stored.
+- It is yet to be confirmed where/if the FindMy root private key pair is stored.
 
 ## Mods
 
@@ -446,6 +444,8 @@ Version|Diameter|Height
 -|-|-
 Stock|32mm|8.0mm
 Disassembled|26mm|3.3mm
+
+#### Remote control
 
 I demonstrated this idea is possible by adding an AirTag to a commonly misplaced item: a remote control. All functionality remains, as shown [here]().
 
