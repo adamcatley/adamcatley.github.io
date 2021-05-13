@@ -427,7 +427,7 @@ It is unclear whether there are any signature checks on OTA update images via DF
 
 - The 32Mbit NOR Flash is [not encrypted](https://twitter.com/ghidraninja/status/1390619216823390208) and contains several assets. 
 - The nRF52832 does not have any secure storage functionality.
-- It is unknown if th U1 has secure storage capability.
+- It is unknown if the U1 has secure storage capability.
 - It is yet to be confirmed where/if the FindMy root private key pair is stored.
 
 ### Other Research
@@ -435,7 +435,7 @@ It is unclear whether there are any signature checks on OTA update images via DF
 Several people have looked into the security of Apple's AirTag and the FindMy network and reported similar findings:
 - [OpenHaystack](https://github.com/seemoo-lab/openhaystack) - an open source framework to spoof genuine AirTags and add custom devices on the FindMy network.
 - Research [paper](https://arxiv.org/pdf/2103.02282.pdf) - analysing the privacy and security of the FindMy network from the same researchers as OpenHaystack.
-- [SendMy](https://positive.security/blog/send-my) - Exploiting the lack of identity authentication to send arbritary data through the FindMy network, and potentially exfiltrate data from secure locations.
+- [SendMy](https://positive.security/blog/send-my) - Exploiting the lack of identity authentication to send arbitrary data through the FindMy network, and potentially exfiltrate data from secure locations.
 - [@stacksmahing](https://twitter.com/ghidraninja) has [demonstrated](https://twitter.com/ghidraninja/status/1391148503196438529) the nRF52 glitch on the AirTag.
 
 ## Mods
@@ -459,7 +459,7 @@ I demonstrated this idea is possible by adding an AirTag to a commonly misplaced
 
 #### Credit card
 
-[Andrew Ngai](https://www.youtube.com/watch?v=Dze4L1YuJYA) repurposed a disassemled AirTag, into the form factor of a credit card, to be able to track his wallet.
+[Andrew Ngai](https://www.youtube.com/watch?v=Dze4L1YuJYA) repurposed a disassembled AirTag, into the form factor of a credit card, to be able to track his wallet.
 
 ### Use custom sounds
 
@@ -505,7 +505,7 @@ Note: some traces have a recognisable capacitor charge/discharge curve due to bu
 
 #### Precision finding
 
-5ms wide spikes at ~25mA then 50ms of base curent at ~4mA. BLE connection events every 30ms. 
+5ms wide spikes at ~25mA then 50ms of base current at ~4mA. BLE connection events every 30ms. 
 
 ![](img/airtag/uwb-trace.jpg)
 
