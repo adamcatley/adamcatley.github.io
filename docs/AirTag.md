@@ -29,7 +29,7 @@ Skip to: [Security](#security-issues), [Privacy](#privacy-concerns), or [Hardwar
 - 32Mbit flash storage is **unencrypted**
 - nRF programming interface (**SWD**) easily accessible via test pads
 
-## Background Research
+## Background
 
 I started this investigation to learn about Apple's approach to electronics design and security in their latest products, especially at such a low price point ($29). I was particularly interested due to the similarities to my [Masters thesis](https://drive.google.com/file/d/0By4g-wZWsMlnaGg5S2JNRXRNWkk/view?usp=sharing) project in which I designed a small BLE device where battery life was also important.
 
@@ -41,8 +41,6 @@ The aspects that I wanted to investigate are:
 - Usage of recent BLE privacy and security features - [results](#bluetooth)
 - Hardware and firmware security of Apple products - [results](#security-issues)
 - What modifications are possible - [results](#mods)
-
-This section contains the research I did about these topics before my AirTag arrived on release day (30/04/2021).
 
 ### FindMy Service Overview
 Apple document the privacy features of the FindMy network, including end to end encryption in detail [here](https://support.apple.com/en-gb/guide/security/sec60fd770ba/web) and [here](https://support.apple.com/en-gb/guide/security/sece994d0126/web).
@@ -393,7 +391,7 @@ Let's look at how reality compares to the claims Apple makes about the AirTag pr
 
     >*"The Find My network is end-to-end encrypted so that only the owner of a device has access to its location data"* - [Source](https://www.apple.com/uk/newsroom/2021/04/apple-introduces-airtag/#:~:text=Communication%20with%20the%20Find%20My%20network%20is%20end-to-end%20encrypted%20so%20that%20only%20the%20owner%20of%20a%20device%20has%20access%20to%20its%20location%20data)
 
-    Reality: Apple [explains](https://support.apple.com/en-gb/guide/security/sec60fd770ba/1/web/1) the private key pair used to generate new identities is synced across devices. This means the AirTag needs to store secrets without a suitable secure memory. Note: Apple may have modified the FindMy encryption mechanism to be more appropriate for the AirTag's insecure hardware by only storing the public key.
+    Reality: Apple [explains](https://support.apple.com/en-gb/guide/security/sec60fd770ba/1/web/1) the private key pair used to generate new identities is synced across devices. This means the AirTag needs to store secrets without a suitable secure memory. Note: Apple may have modified the FindMy encryption mechanism to be more appropriate for the AirTag's insecure hardware by only storing the public key, as suggested [here](https://positive.security/blog/send-my).
 
     Impact: A lost AirTag could be analysed to extract the private key from memory. From this the public key(s) can be calculated to download the owner's location records and decrypt with the now known private key(s).
 
@@ -423,7 +421,7 @@ Modifying the firmware does not result in a boot failure. This indicates the sig
 
 #### Over the air updates
 
-It is unclear whether there are any signature checks on OTA update images via DFU. If not, this could raise many severe possibilities, such as remotely disabling privacy featues, extracting private keys, or even malicious firmware spreading itself to any nearby AirTag as a worm.
+It is unclear whether there are any signature checks on OTA update images via DFU. If not, this could raise many severe possibilities, such as remotely disabling privacy features, extracting private keys, or even malicious firmware spreading itself to any nearby AirTag as a worm.
 
 ### Insecure storage
 
@@ -431,6 +429,14 @@ It is unclear whether there are any signature checks on OTA update images via DF
 - The nRF52832 does not have any secure storage functionality.
 - It is unknown if th U1 has secure storage capability.
 - It is yet to be confirmed where/if the FindMy root private key pair is stored.
+
+### Other Research
+
+Several people have looked into the security of Apple's AirTag and the FindMy network and reported similar findings:
+- [OpenHaystack](https://github.com/seemoo-lab/openhaystack) - an open source framework to spoof genuine AirTags and add custom devices on the FindMy network.
+- Research [paper](https://arxiv.org/pdf/2103.02282.pdf) - analysing the privacy and security of the FindMy network from the same researchers as OpenHaystack.
+- [SendMy](https://positive.security/blog/send-my) - Exploiting the lack of identity authentication to send arbritary data through the FindMy network, and potentially exfiltrate data from secure locations.
+- [@stacksmahing](https://twitter.com/ghidraninja) has [demonstrated](https://twitter.com/ghidraninja/status/1391148503196438529) the nRF52 glitch on the AirTag
 
 ## Mods
 
