@@ -453,7 +453,7 @@ Disassembled|26mm|3.3mm
 
 #### Remote control
 
-I demonstrated this idea is possible by adding an AirTag to a commonly misplaced item: a remote control. All functionality remains, as shown [here]().
+I demonstrated this idea is possible by adding an AirTag to a commonly misplaced item: a remote control. All functionality remains, as shown [here](https://twitter.com/adamcatley/status/1393171134489808896).
 
 ![](img/airtag/remote.jpg)
 
