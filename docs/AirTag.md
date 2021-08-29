@@ -43,9 +43,9 @@ The aspects that I wanted to investigate are:
 - What modifications are possible - [results](#mods)
 
 ### FindMy Service Overview
-Apple document the privacy features of the FindMy network, including end to end encryption in detail [here](https://support.apple.com/en-gb/guide/security/sec60fd770ba/web) and [here](https://support.apple.com/en-gb/guide/security/sece994d0126/web).
+Apple document the privacy features of the FindMy network, including end to end encryption in detail [here](https://support.apple.com/en-gb/guide/security/sec6cbc80fd0/1/web/1#:~:text=End-to-end%20encryption) and [here](https://support.apple.com/en-gb/guide/security/sece994d0126/web).
 
-[![](https://help.apple.com/assets/5C2D31DA0946224012A6B385/5C2D345D0946227F55A6AEB2/en_GB/bae1694494dee2a8a8872468fbb39a4f.png)](https://support.apple.com/en-gb/guide/security/sece994d0126/web)
+[![](img/airtag/findmy.png)](https://support.apple.com/en-gb/guide/security/sece994d0126/web)
 
 
 ### Supported devices
