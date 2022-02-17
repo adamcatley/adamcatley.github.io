@@ -31,7 +31,7 @@ Skip to: [Security](#security-issues), [Privacy](#privacy-concerns), or [Hardwar
 
 ## Background
 
-I started this investigation to learn about Apple's approach to electronics design and security in their latest products, especially at such a low price point ($29). I was particularly interested due to the similarities to my [Masters thesis](https://drive.google.com/file/d/0By4g-wZWsMlnaGg5S2JNRXRNWkk/view?usp=sharing) project in which I designed a small BLE device where battery life was also important.
+I started this investigation to learn about Apple's approach to electronics design and security in their latest products, especially at such a low price point ($29). I was particularly interested due to the similarities to my [Masters thesis](https://drive.google.com/file/d/0By4g-wZWsMlnaGg5S2JNRXRNWkk/view?usp=sharing&resourcekey=0-in1KmqIST8y7LcUoblQEpA) project in which I designed a small BLE device where battery life was also important.
 
 The aspects that I wanted to investigate are:
 - Hardware design to fit so much in a small enclosure (BLE, UWB, NFC, accelerometer, speaker, antennas) - [results](#hardware)
